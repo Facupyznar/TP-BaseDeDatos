@@ -1,0 +1,22 @@
+# Dependencias / builds
+node_modules/
+dist/
+coverage/
+
+# Entornos locales (no versionar secretos)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SO / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
