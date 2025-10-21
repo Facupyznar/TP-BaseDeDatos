@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Usuarios</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="header">
+    <a class="home-btn" href="/">
+        <img src="/imgs/casa3.png" alt="Inicio">
+    </a>
+</header>
+
+<main class="container">
+    <% if (successMessage) { %>
+        <div class="alert center-text"><%= successMessage %></div>
+    <% } %>
+
+    <h1 class="center-text">Lista de usuarios</h1>
+
+    <% if (!users || users.length === 0) { %>
+        <p class="center-text" style="color:var(--muted);">No hay usuarios para mostrar.</p>
+    <% } else { %>
+        <ul>
+            <% users.forEach(u => { %>
+                <li class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <div>
+                        <strong>
+                            <a class="link" href="/users/<%= u.user_id %>/profile"><%= u.user_name %></a>
+                        </strong>
+                        — <%= u.user_username %> — <%= u.user_email %>
+                        <% if (u.is_admin === true) { %>
+                            <span class="badge" style="margin-left:8px;">Admin</span>
+                        <% } %>
+                    </div>
+
+                    <form action="/users/<%= u.user_id %>/delete" method="POST" style="margin:0;"
+                          onsubmit="return confirm('¿Seguro que querés borrar este usuario? Esta acción no se puede deshacer.');">
+                        <button type="submit" class="btn-danger">Eliminar</button>
+                    </form>
+                </li>
+            <% }) %>
+        </ul>
+    <% } %>
+
+    <div id="inicio" class="center-text" style="margin-top:16px;">
+        <a href="/">Inicio</a>
+    </div>
+</main>
+
+</body>
+</html>

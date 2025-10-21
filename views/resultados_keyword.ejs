@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <title>Resultados por Keyword</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="header">
+    <a class="home-btn" href="/">
+        <img src="/imgs/casa3.png" alt="Inicio">
+    </a>
+</header>
+
+<main class="container">
+    <h1 class="center-text">Resultados de "<%= (keyword || '') %>"</h1>
+
+    <% if (error) { %>
+        <div class="alert center-text"><%= error %></div>
+    <% } %>
+
+    <% if (total > 0) { %>
+        <p class="center-text" style="color:var(--muted)">Se encontraron <strong><%= total %></strong> película(s).</p>
+
+        <ul class="center-text">
+            <% movies.forEach(m => { %>
+                <li>
+                    <a href="/pelicula/<%= m.movie_id %>?from=keyword">
+                        <%= m.title %>
+                        <% if (m.release_date) { %> (<%= new Date(m.release_date).getFullYear() %>)<% } %>
+                    </a>
+                </li>
+            <% }) %>
+        </ul>
+    <% } else if (!error) { %>
+        <p class="center-text">No se encontraron películas relacionadas.</p>
+    <% } %>
+</main>
+
+</body>
+</html>

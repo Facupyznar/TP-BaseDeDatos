@@ -44,7 +44,7 @@
     <h3 class="center-text">Dirigida por:</h3>
     <ul class="center-text">
         <% (movie.directors || []).forEach(d => { %>
-            <li><a href="/director/<%= d.crew_member_id %>"><%= d.crew_member_name %></a></li>
+            <li><a href="/director/<%= d.crew_member_id %>?from=movie"><%= d.crew_member_name %></a></li>
         <% }) %>
         <% if (!movie.directors || !movie.directors.length) { %><li>—</li><% } %>
     </ul>
@@ -68,7 +68,7 @@
                 .sort((a,b)=>(a.cast_order ?? 999)-(b.cast_order ?? 999))
         .forEach(a => { %>
             <li>
-                <a href="/actor/<%= a.actor_id %>"><%= a.actor_name %></a>
+                <a href="/actor/<%= a.actor_id %>?from=movie"><%= a.actor_name %></a>
                 <% if (a.character_name) { %> — <em><%= a.character_name %></em><% } %>
             </li>
         <% }) %>

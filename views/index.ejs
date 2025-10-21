@@ -19,11 +19,12 @@
         <% if (!user) { %>
             <a href="/login" class="menu">Iniciar sesión</a>
             <a href="/register" class="menu">Registrarse</a>
+        <% } else if (isAdmin) { %>
+            <a href="/users" class="menu">Lista de usuarios</a>
+            <form action="/logout" method="POST"><button class="menu" type="submit">Cerrar sesión</button></form>
         <% } else { %>
             <a href="/profile/<%= user.id %>" class="menu">Mi perfil</a>
-            <form action="/logout" method="POST">
-                <button class="menu" type="submit">Cerrar sesión</button>
-            </form>
+            <form action="/logout" method="POST"><button class="menu" type="submit">Cerrar sesión</button></form>
         <% } %>
     </nav>
 </header>

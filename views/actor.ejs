@@ -23,7 +23,7 @@
                     .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
             .forEach((movie) => { %>
                 <li>
-                    <a href="/pelicula/<%= movie.movie_id %>">
+                    <a href="/pelicula/<%= movie.movie_id %>?from=person">
                         <%= movie.title %>
                         <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
                     </a>
@@ -43,7 +43,7 @@
                         .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
                 .forEach((movie) => { %>
                     <li>
-                        <a href="/pelicula/<%= movie.movie_id %>">
+                        <a href="/pelicula/<%= movie.movie_id %>?from=person">
                             <%= movie.title %>
                             <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
                         </a>

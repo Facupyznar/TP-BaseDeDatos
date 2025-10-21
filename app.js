@@ -31,9 +31,10 @@ app.use(session({
     saveUninitialized: false,
 }));
 
-// Hacer que "user" esté disponible en todas las vistas
+// Hacer que "user" e "isAdmin" estén disponibles en todas las vistas
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
+    res.locals.isAdmin = !!(req.session.user && req.session.user.is_admin === true);
     next();
 });
 
@@ -46,12 +47,30 @@ const db = new Pool({
     port: Number(process.env.DB_PORT) || 5432,
 });
 
-db.query(`SET search_path TO movies, public`).catch(() => {/* si falla, simplemente prefijamos en queries */});
+db.query(`SET search_path TO movies, public`).catch(() => {/* si falla, prefijamos en queries */});
 
 // ======= Helpers =======
 function requireAuth(req, res, next) {
     if (!req.session.user) return res.status(401).render('login', { error: 'Iniciá sesión para continuar' });
     next();
+}
+
+// --- Admin helpers ---
+function isAdmin(req) {
+    return !!(req.session.user && req.session.user.is_admin === true);
+}
+
+function requireAdmin(req, res, next) {
+    if (!isAdmin(req)) return res.status(403).send('Solo administradores.');
+    next();
+}
+
+function requireAdminOrFromApp(req, res, next) {
+    if (isAdmin(req)) return next();
+    const from = (req.query.from || '').toLowerCase();
+    const allow = ['search', 'keyword', 'person', 'movie'].includes(from);
+    if (allow) return next();
+    return res.status(403).send('Acceso directo solo para admin. Usá el buscador para navegar.');
 }
 
 // =========================================================
@@ -69,9 +88,9 @@ app.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        // movies.users: user_id, user_username, user_name, user_email, password_hash
+        // movies.users: user_id, user_username, user_name, user_email, password_hash, is_admin
         const { rows } = await db.query(
-            `SELECT user_id, user_username, user_name, user_email, password_hash
+            `SELECT user_id, user_username, user_name, user_email, password_hash, is_admin
          FROM movies.users
         WHERE user_username = $1`,
             [username]
@@ -82,11 +101,13 @@ app.post('/login', async (req, res) => {
         const ok = await bcrypt.compare(password, user.password_hash);
         if (!ok) return res.status(401).render('login', { error: 'Usuario o contraseña inválidos' });
 
+        // Guardamos el flag en la sesión (no se puede transformar en admin desde el login)
         req.session.user = {
             id: user.user_id,
             username: user.user_username,
             name: user.user_name,
-            email: user.user_email
+            email: user.user_email,
+            is_admin: user.is_admin === true
         };
         res.redirect('/');
     } catch (e) {
@@ -120,7 +141,7 @@ app.post('/register', async (req, res) => {
         );
 
         const u = rows[0];
-        req.session.user = { id: u.user_id, username: u.user_username, name: u.user_name, email: u.user_email };
+        req.session.user = { id: u.user_id, username: u.user_username, name: u.user_name, email: u.user_email, is_admin: false };
         res.redirect('/');
     } catch (e) {
         console.error(e);
@@ -130,6 +151,55 @@ app.post('/register', async (req, res) => {
 
 app.post('/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/'));
+});
+
+// ---------- KEYWORDS: páginas dedicadas ----------
+app.get('/keywords', (req, res) => {
+    res.render('search_keyword', { user: req.session.user || null });
+});
+
+app.get('/keywords/search', async (req, res) => {
+    try {
+        const keyword = (req.query.k || '').trim();
+        if (!keyword) {
+            return res.render('resultados_keyword', {
+                user: req.session.user || null,
+                keyword,
+                movies: [],
+                total: 0,
+                error: 'Ingresá una palabra clave.'
+            });
+        }
+
+        const sql = `
+      SELECT m.movie_id, m.title, m.release_date
+      FROM movies.movie m
+      JOIN movies.movie_keywords mk ON mk.movie_id = m.movie_id
+      JOIN movies.keyword k        ON k.keyword_id = mk.keyword_id
+      WHERE LOWER(k.keyword_name) LIKE LOWER('%' || $1 || '%')
+      GROUP BY m.movie_id, m.title, m.release_date
+      ORDER BY m.release_date DESC NULLS LAST, m.title ASC
+      LIMIT 200;
+    `;
+        const { rows } = await db.query(sql, [keyword]);
+
+        res.render('resultados_keyword', {
+            user: req.session.user || null,
+            keyword,
+            movies: rows,
+            total: rows.length,
+            error: null
+        });
+    } catch (err) {
+        console.error('Error buscando por keyword:', err);
+        res.status(500).render('resultados_keyword', {
+            user: req.session.user || null,
+            keyword: req.query.k || '',
+            movies: [],
+            total: 0,
+            error: 'Ocurrió un error buscando por keyword.'
+        });
+    }
 });
 
 // =========================================================
@@ -146,6 +216,11 @@ app.get('/buscar', async (req, res) => {
     const like = `%${q}%`;
 
     if (!q) return res.render('resultado', { q, movies: [], actors: [], directors: [] });
+
+    // Si es keyword, redirigimos a su página dedicada
+    if (type === 'keyword') {
+        return res.redirect('/keywords/search?k=' + encodeURIComponent(q));
+    }
 
     try {
         // Películas por título
@@ -192,21 +267,8 @@ app.get('/buscar', async (req, res) => {
             const d = await directorQ;
             return res.render('resultado', { q, movies: [], actors: [], directors: d.rows });
         }
-        if (type === 'keyword') {
-            const k = await db.query(
-                `SELECT DISTINCT m.movie_id, m.title, m.release_date
-           FROM movies.movie m
-           JOIN movies.movie_keywords mk ON mk.movie_id = m.movie_id
-           JOIN movies.keyword k        ON k.keyword_id = mk.keyword_id
-          WHERE k.keyword_name ILIKE $1
-          ORDER BY m.release_date DESC NULLS LAST
-          LIMIT 100`,
-                [like]
-            );
-            return res.render('resultado', { q, movies: k.rows, actors: [], directors: [] });
-        }
 
-        // todo
+        // Todo
         const [m, a, d] = await Promise.all([movieQ, actorQ, directorQ]);
         res.render('resultado', { q, movies: m.rows, actors: a.rows, directors: d.rows });
     } catch (err) {
@@ -216,9 +278,9 @@ app.get('/buscar', async (req, res) => {
 });
 
 // =========================================================
-/*  B) Páginas de personas */
+/*  B) Páginas de personas (restringidas: admin directo / usuarios via from=...) */
 // =========================================================
-app.get('/actor/:id', async (req, res) => {
+app.get('/actor/:id', requireAdminOrFromApp, async (req, res) => {
     const id = Number(req.params.id);
     try {
         const { rows } = await db.query(
@@ -239,7 +301,7 @@ app.get('/actor/:id', async (req, res) => {
     }
 });
 
-app.get('/director/:id', async (req, res) => {
+app.get('/director/:id', requireAdminOrFromApp, async (req, res) => {
     const id = Number(req.params.id);
     try {
         const { rows } = await db.query(
@@ -261,9 +323,9 @@ app.get('/director/:id', async (req, res) => {
 });
 
 // =========================================================
-/*  C) Detalle de película */
+/*  C) Detalle de película (restringido: admin directo / usuarios via from=...) */
 // =========================================================
-app.get('/pelicula/:id', async (req, res) => {
+app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
     const movieId = Number(req.params.id);
     try {
         // 1) Datos base de la película
@@ -393,7 +455,7 @@ app.post('/users/:userId/movies/:movieId/rate', requireAuth, async (req, res) =>
        DO UPDATE SET rating = EXCLUDED.rating, created_at = now()`,
             [userId, movieId, rating]
         );
-        res.redirect(`/pelicula/${movieId}`);
+        res.redirect(`/pelicula/${movieId}?from=movie`);
     } catch (e) {
         console.error(e);
         res.status(500).send('Error guardando rating');
@@ -417,10 +479,95 @@ app.post('/users/:userId/movies/:movieId/opinion', requireAuth, async (req, res)
        DO UPDATE SET opinion = EXCLUDED.opinion, created_at = now()`,
             [userId, movieId, opinion]
         );
-        res.redirect(`/pelicula/${movieId}`);
+        res.redirect(`/pelicula/${movieId}?from=movie`);
     } catch (e) {
         console.error(e);
         res.status(500).send('Error guardando opinión');
+    }
+});
+
+// ===== Perfil de usuario  =====
+
+// Usuario por ID
+async function getPgUser(db, userId) {
+    const { rows } = await db.query(
+        `SELECT user_id, user_username, user_name, user_email
+       FROM movies.users
+      WHERE user_id = $1`,
+        [userId]
+    );
+    return rows[0] || null;
+}
+
+// Calificaciones/opiniones del usuario (con títulos de película)
+async function getPgUserReviews(db, userId) {
+    const { rows } = await db.query(
+        `SELECT mu.movie_id, m.title, mu.rating, mu.opinion, mu.created_at
+       FROM movies.movie_user mu
+       JOIN movies.movie m ON m.movie_id = mu.movie_id
+      WHERE mu.user_id = $1
+      ORDER BY mu.created_at DESC`,
+        [userId]
+    );
+    return rows;
+}
+
+app.get('/profile/:userId', async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId)) return res.status(400).send('ID inválido');
+
+    try {
+        const user = await getPgUser(db, userId);
+        if (!user) return res.status(404).send('Usuario no encontrado');
+
+        const reviews = await getPgUserReviews(db, userId);
+
+        // Por ahora sin Mongo
+        const activities = [];
+        const isAdminFlag = isAdmin(req);
+
+        res.render('user_profile', { user, reviews, activities, isAdmin: isAdminFlag });
+    } catch (e) {
+        console.error('Error cargando perfil:', e);
+        res.status(500).send('Error interno al cargar el perfil.');
+    }
+});
+
+app.get('/users/:userId/profile', (req, res) => {
+    res.redirect(`/profile/${encodeURIComponent(req.params.userId)}`);
+});
+
+// ===== Usuarios (solo admin) =====
+app.get('/users', requireAdmin, async (req, res) => {
+    try {
+        const { rows } = await db.query(
+            `SELECT user_id, user_username, user_name, user_email, is_admin
+         FROM movies.users
+        ORDER BY user_name`
+        );
+        res.render('users', { users: rows, successMessage: null });
+    } catch (e) {
+        console.error('Error listando usuarios:', e);
+        res.status(500).send('Error listando usuarios.');
+    }
+});
+
+app.post('/users/:userId/delete', requireAdmin, async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId)) return res.status(400).send('ID inválido');
+
+    try {
+        // Si tu FK no tiene ON DELETE CASCADE, primero borra relaciones
+        await db.query(`DELETE FROM movies.movie_user WHERE user_id = $1`, [userId]);
+
+        // Ahora el usuario
+        await db.query(`DELETE FROM movies.users WHERE user_id = $1`, [userId]);
+
+        // Volver al listado
+        res.redirect('/users');
+    } catch (e) {
+        console.error('Error borrando usuario:', e);
+        res.status(500).send('Error borrando usuario.');
     }
 });
 
