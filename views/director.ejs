@@ -1,33 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="utf-8"/>
     <title>Películas dirigidas por <%= directorName %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<h1>Películas dirigidas por <%= directorName %></h1>
-<ul>
-    <% movies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date)).forEach((movie) => { %>
-        <li><a href="/pelicula/<%= movie.movie_id %>"><%= movie.title %> (<%= new Date(movie.release_date).getFullYear() %>)</a></li>
-    <% }); %>
-</ul>
-<p></p>
-<div id="inicio"><a href="/">Inicio</a></div>
 
-<script>
-    const coll = document.getElementsByClassName('collapsible');
-    for (let i = 0; i < coll.length; i++) {
-        coll[i].addEventListener('click', function () {
-            this.classList.toggle('active');
-            const content = this.nextElementSibling;
-            if (content.style.display === 'block') {
-                content.style.display = 'none';
-            } else {
-                content.style.display = 'block';
-            }
-        });
-    }
-</script>
+<header class="header">
+    <a class="home-btn" href="/">
+        <img src="/imgs/casa3.png" alt="Inicio">
+    </a>
+</header>
+
+<main class="container">
+    <h2 class="center-text">Películas dirigidas por <%= directorName %></h2>
+
+    <% if ((movies || []).length > 0) { %>
+        <ul class="center-text">
+            <% movies
+                    .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
+            .forEach((movie) => { %>
+                <li>
+                    <a href="/pelicula/<%= movie.movie_id %>">
+                        <%= movie.title %>
+                        <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
+                    </a>
+                </li>
+            <% }); %>
+        </ul>
+    <% } else { %>
+        <p class="center-text">No ha dirigido ninguna película.</p>
+    <% } %>
+
+    <% if (typeof actingMovies !== 'undefined') { %>
+        <h2 class="center-text">Películas en las que actuó:</h2>
+        <% if (actingMovies.length > 0) { %>
+            <ul class="center-text">
+                <% actingMovies
+                        .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
+                .forEach((movie) => { %>
+                    <li>
+                        <a href="/pelicula/<%= movie.movie_id %>">
+                            <%= movie.title %>
+                            <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
+                        </a>
+                    </li>
+                <% }); %>
+            </ul>
+        <% } else { %>
+            <p class="center-text">No ha actuado en ninguna película.</p>
+        <% } %>
+    <% } %>
+
+    <div id="inicio" class="center-text"><a href="/">Inicio</a></div>
+</main>
 
 </body>
 </html>

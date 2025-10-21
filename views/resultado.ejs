@@ -1,21 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Resultado de la Búsqueda</title>
+    <meta charset="utf-8"/>
+    <title>Resultados para "<%= q %>"</title>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<h1>Resultado de la Búsqueda</h1>
-<% if (movies.length === 0) { %>
-    <p>No hay resultados.</p>
-<% } else { %>
+<header class="header">
+    <a class="home-btn" href="/">
+        <img src="/imgs/casa3.png" alt="Inicio">
+    </a>
+</header>
+
+<h1 class = "center-text"> Resultados para "<%= q %>"</h1>
+
+<!-- Películas -->
+<% if (movies.length) { %>
+    <h2 class = "center-text">Películas</h2>
     <ul>
-        <% movies.forEach((movie) => { %>
-            <li><a href="/pelicula/<%= movie.movie_id %>"><%= movie.title %></a></li>
-        <% }); %>
+        <% movies.forEach(m => { %>
+            <li class = "center-text"><a href="/pelicula/<%= m.movie_id %>"><%= m.title %></a></li>
+        <% }) %>
     </ul>
 <% } %>
-<p></p>
-<div id="inicio"><a href="/">Inicio</a></div>
+
+<!-- Actores -->
+<% if (actors.length) { %>
+    <h2>Actores</h2>
+    <ul>
+        <% actors.forEach(a => { %>
+            <li><a href="/actor/<%= a.person_id %>"><%= a.person_name %></a></li>
+        <% }) %>
+    </ul>
+<% } %>
+
+<!-- Directores -->
+<% if (directors.length) { %>
+    <h2>Directores</h2>
+    <ul>
+        <% directors.forEach(d => { %>
+            <li><a href="/director/<%= d.person_id %>"><%= d.person_name %></a></li>
+        <% }) %>
+    </ul>
+<% } %>
+
+<% if (!movies.length && !actors.length && !directors.length) { %>
+    <p class = "center-text">No se encontraron resultados.</p>
+<% } %>
 </body>
 </html>

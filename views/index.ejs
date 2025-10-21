@@ -1,102 +1,57 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="utf-8"/>
     <title>MovieWeb</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            justify-content: start;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding-top: 24px;
-        }
-        header {
-            width: 100%;
-            max-width: 780px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding: 0 12px;
-            box-sizing: border-box;
-        }
-        .actions a, .actions button {
-            display: inline-block;
-            padding: 8px 14px;
-            font-size: 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            border: 1px solid #0078d4;
-            background: #0078d4;
-            color: #fff;
-            cursor: pointer;
-        }
-        .actions a.secondary {
-            background: transparent;
-            color: #0078d4;
-        }
-        .actions form { display: inline; margin: 0; }
-        h1 {
-            font-size: 36px;
-            color: #333333;
-            margin: 12px 0 20px 0;
-            text-align: center;
-        }
-        form.search {
-            text-align: center;
-        }
-        input[type="text"] {
-            padding: 10px;
-            width: 300px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 18px;
-            margin-right: 10px;
-            background: #fff;
-        }
-        button[type="submit"] {
-            background-color: #0078d4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-        button[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-        .hello { color:#333; font-size:14px; margin-right:8px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 
-<header>
-    <div class="logo"><strong>MovieWeb</strong></div>
+<!-- Header sin “casa” (no hace falta en Home) -->
+<header class="header">
+    <!-- Menú hamburguesa -->
+    <button class="menu-button" id="menuButton" onclick="toggleMenu()">
+        <div></div><div></div><div></div>
+    </button>
 
-    <div class="actions">
-        <% if (typeof user !== 'undefined' && user) { %>
-            <span class="usuario"> <strong><%= user.username %></strong></span>
-            <form action="/logout" method="POST">
-                <button type="submit">Salir</button>
-            </form>
+    <nav class="menu-content" id="menuContent">
+        <% if (!user) { %>
+            <a href="/login" class="menu">Iniciar sesión</a>
+            <a href="/register" class="menu">Registrarse</a>
         <% } else { %>
-            <a href="/login">Iniciar sesión</a>
-            <a class="secondary" href="/register">Registrate</a>
+            <a href="/profile/<%= user.id %>" class="menu">Mi perfil</a>
+            <form action="/logout" method="POST">
+                <button class="menu" type="submit">Cerrar sesión</button>
+            </form>
         <% } %>
-    </div>
+    </nav>
 </header>
 
-<h1>MovieWeb</h1>
+<!-- Hero centrado -->
+<main class="home">
+    <h1 class="home-title">MovieWeb</h1>
+    <form class="searchbar home-search" action="/buscar" method="GET">
+        <select name="type" aria-label="Tipo de búsqueda">
+            <option value="todo" selected>Todo</option>
+            <option value="movie">Película</option>
+            <option value="actor">Actor</option>
+            <option value="director">Director</option>
+            <option value="keyword">Keyword</option>
+        </select>
+        <input class="input" type="text" name="q" placeholder="Buscar..." required />
+        <button class="btn" type="submit">Buscar</button>
+    </form>
+</main>
 
-<form class="search" action="/buscar" method="GET">
-    <input type="text" name="q" placeholder="Buscar películas..." />
-    <button type="submit">Buscar</button>
-</form>
+<script>
+    function toggleMenu() {
+        const btn = document.getElementById("menuButton");
+        const menu = document.getElementById("menuContent");
+        btn.classList.toggle("open");
+        menu.classList.toggle("open");
+    }
+</script>
 
 </body>
 </html>

@@ -1,70 +1,262 @@
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f5f5f5;
+/* ===== Variables ===== */
+:root{
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --text:#222;
+    --muted:#6b7280;
+    --brand:#0a66da;
+    --brand-600:#0959c0;
+    --brand-700:#084db0;
+    --ok:#16a34a;
+    --ok-700:#15803d;
+    --danger:#dc2626;
+    --radius:12px;
+    --shadow:0 6px 18px rgba(0,0,0,.08);
+    --shadow-sm:0 4px 10px rgba(0,0,0,.06);
+    --ring: 0 0 0 3px rgba(10,102,218,.15);
+}
+
+/* ===== Base ===== */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;
+    background: var(--bg);
+    color: var(--text);
+    margin:0;
+}
+
+/* ===== Header común ===== */
+.header{
+    position: relative;
+    height: 72px;
+}
+
+/* ===== Botón de casa pequeño (44x44) ===== */
+.home-btn{
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    width: 44px;
+    height: 44px;
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    justify-content: center;
+    background: var(--brand);
+    border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s ease, background .2s ease, filter .15s ease;
 }
+.home-btn:hover{ background: var(--brand-600); transform: translateY(-1px); filter: brightness(1.02); }
+.home-btn img{ width: 62%; height: auto; display: block; }
 
-h1 {
-    font-size: 36px;
-    color: #333333;
-    margin-bottom: 20px;
+/* ===== Menú hamburguesa (si lo usás en otras páginas) ===== */
+.menu-button{
+    position:absolute; top:18px; right:24px;
+    background: var(--card);
+    border: 1px solid #e8e8ef;
+    border-radius: 12px;
+    width: 44px; height: 44px;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    gap:4px; cursor:pointer; box-shadow: var(--shadow-sm);
 }
-
-ul {
-    list-style: none;
-    padding: 0;
+.menu-button div{ width: 22px; height:3px; background:#333; border-radius: 2px; }
+.menu-content{
+    position:absolute; top:72px; right:24px;
+    display:flex; flex-direction:column; gap:8px;
+    background: var(--card); padding:10px; border-radius: 12px;
+    border: 1px solid #e8e8ef; box-shadow: var(--shadow);
+    opacity:0; transform: translateY(-6px); pointer-events:none;
+    transition: opacity .15s ease, transform .15s ease;
 }
+.menu-content.open{ opacity:1; transform: translateY(0); pointer-events:auto }
+.menu{ color:#333; background:#fff; border:1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; font-weight:600; text-align:left }
+.menu:hover{ background: #f3f4f6 }
 
-li {
-    margin: 10px 0;
-}
+/* ===== Tipografía y enlaces ===== */
+a{color: var(--brand); text-decoration: none; font-weight: 700}
+a:hover{color: var(--brand-700)}
+h1{font-size: clamp(28px, 5vw, 44px); margin: 10px 0 18px;}
+h2{font-size: 26px; margin: 14px 0}
+h3{font-size: 20px; margin: 12px 0}
+p.meta{color:var(--muted); margin:4px 0 14px}
+ul{list-style:none; padding:0; margin:0}
+li{margin:8px 0}
 
-a {
-    text-decoration: none;
-    color: #0078d4;
-    font-weight: bold;
-}
-
-a:hover {
-    color: #0056b3;
-}
-
-.collapsible {
+/* ===== Botones ===== */
+button,.btn{
+    appearance: none;
+    border: 0;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 800;
+    letter-spacing: .2px;
     cursor: pointer;
-    user-select: none;
-    padding: 10px;
-    background-color: #0078d4;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    background: var(--brand);
+    color:#fff;
+    box-shadow: 0 2px 0 rgba(0,0,0,.08), 0 8px 16px rgba(10,102,218,.18);
+    transition: transform .05s ease, filter .15s ease, background .2s ease;
+}
+button:hover{ filter: brightness(1.05) }
+button:active{ transform: translateY(1px) scale(.99) }
+button:disabled{ opacity:.6; cursor:not-allowed }
+
+.btn-outline{ background:#fff; color:var(--brand); border:1px solid var(--brand); box-shadow:none }
+.btn-outline:hover{ background:#ecf3ff }
+.btn-success{ background: var(--ok); box-shadow: 0 2px 0 rgba(0,0,0,.08), 0 8px 16px rgba(21,128,61,.18) }
+.btn-success:hover{ background: var(--ok-700) }
+.btn-danger{ background: var(--danger) }
+
+/* ===== Inputs/Selects ===== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select{
+    appearance: none;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 16px;
+    line-height: 1.25;
+    outline: none;
+}
+textarea{ min-height: 110px; resize: vertical }
+input:focus, textarea:focus, select:focus{
+    border-color: var(--brand);
+    box-shadow: var(--ring);
+}
+
+/* ===== Tarjetas y bloques ===== */
+.card{
+    background: var(--card);
+    border: 1px solid #e8e8ef;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== HOME (si usás index con hero centrado) ===== */
+.home{
+    width: min(980px, 92vw);
+    margin: 8vh auto 6vh;
+    display: grid;
+    justify-items: center;
+    row-gap: 22px;
     text-align: center;
 }
+.home-title{
+    font-weight: 900;
+    letter-spacing: .2px;
+}
+.searchbar{
+    display:flex; gap:12px; align-items:center; justify-content:center;
+    width: min(900px, 95vw);
+}
+.home-search select{ min-width: 140px }
+.home-search .input{ flex: 1; min-width: 280px }
 
-.content {
-    display: none;
-    padding: 10px;
-    background-color: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+/* ===== Contenedor genérico (resultados / detalle / etc.) ===== */
+.container{
+    width: min(1080px, 92vw);
+    background: var(--card);
+    margin: 28px auto;
+    padding: 28px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
-.active {
-    display: block;
+/* ===== Volver al inicio ===== */
+#inicio{ text-align:center; margin-top: 24px }
+#inicio a{
+    display:inline-block; padding: 12px 24px;
+    background: #111; color: #fff; border-radius: 999px;
+}
+#inicio a:hover{ filter: brightness(1.1) }
+
+/* ===== Overview película ===== */
+#overview{
+    background: #eef7ff;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    line-height: 1.6;
 }
 
-#overview {
-    width: 50%;
-    margin: 0 auto; /* Centrar horizontalmente el elemento */
-    padding: 10px; /* Agregar un poco de espacio interior para que se vea mejor */
-    background-color: #ffffff; /* Opcional: agregar un fondo blanco al elemento */
+/* ===== AUTH (centrado y prolijo) ===== */
+.auth{
+    min-height: calc(100vh - 72px);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+}
+.auth-card{
+    width: min(860px, 94vw);
+    background: var(--card);
+    border: 1px solid #e8e8ef;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 28px;
+}
+.auth-card h1{
+    margin: 0 0 18px 0;
+    font-size: clamp(24px, 3.6vw, 34px);
+}
+.alert{
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 10px 0 16px;
+    font-weight: 600;
 }
 
-#inicio {
-    margin: 0 auto; /* Centrar horizontalmente el elemento */
-    padding: 50px; /* Agregar un poco de espacio interior para que se vea mejor */
+/* Grilla del formulario (labels a la izq, campos a la dcha) */
+.form-grid{
+    display: grid;
+    grid-template-columns: 180px minmax(320px, 520px);
+    justify-content: center;
+    align-items: center;
+    gap: 16px 18px;
+    margin-top: 6px;
 }
+.form-grid label{ justify-self: end; font-weight: 600; }
+.form-grid input,
+.form-grid textarea,
+.form-grid select{ width: 100%; }
+
+.form-actions{
+    grid-column: 2 / 3;
+    justify-self: start;
+    margin-top: 6px;
+}
+.form-note{
+    grid-column: 2 / 3;
+    margin: 6px 0 0;
+    color: var(--muted);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 720px){
+    .menu-button{ right:14px; top:14px }
+    .menu-content{ right:12px }
+    .home{ margin-top: 6vh }
+    .searchbar{ gap:8px; flex-direction: column; width: 100% }
+    .home-search select, .home-search .input, .home-search .btn{ width: 100% }
+    .form-grid{ grid-template-columns: 1fr; }
+    .form-grid label{ justify-self: start; }
+    .form-actions, .form-note{
+        grid-column: 1 / -1;
+        justify-self: stretch;
+    }
+    .form-actions .btn{ width: 100%; }
+    .home-btn{ left: 14px; top: 14px; width: 42px; height: 42px; }
+    .home-btn img{ width: 60%; }
+}
+
+/* Utilidades para centrar secciones de detalle */
+.center-text { text-align: center; }
+.section { margin-top: 12px; }

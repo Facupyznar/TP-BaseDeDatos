@@ -1,17 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="utf-8"/>
     <title>Películas con <%= actorName %></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<h1>Películas con <%= actorName %></h1>
-<ul>
-    <% movies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date)).forEach((movie) => { %>
-        <li><a href="/pelicula/<%= movie.movie_id %>"><%= movie.title %> (<%= new Date(movie.release_date).getFullYear() %>)</a></li>
-    <% }); %>
-</ul>
-<p></p>
-<div id="inicio"><a href="/">Inicio</a></div>
+
+<header class="header">
+    <a class="home-btn" href="/">
+        <img src="/imgs/casa3.png" alt="Inicio">
+    </a>
+</header>
+
+<main class="container">
+    <h2 class="center-text">Películas con <%= actorName %></h2>
+
+    <% if ((movies || []).length > 0) { %>
+        <ul class="center-text">
+            <% movies
+                    .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
+            .forEach((movie) => { %>
+                <li>
+                    <a href="/pelicula/<%= movie.movie_id %>">
+                        <%= movie.title %>
+                        <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
+                    </a>
+                    <% if (movie.character_name) { %> — <em><%= movie.character_name %></em><% } %>
+                </li>
+            <% }); %>
+        </ul>
+    <% } else { %>
+        <p class="center-text">No ha actuado en ninguna película.</p>
+    <% } %>
+
+    <% if (typeof directingMovies !== 'undefined') { %>
+        <h2 class="center-text">Películas dirigidas por <%= actorName %></h2>
+        <% if (directingMovies.length > 0) { %>
+            <ul class="center-text">
+                <% directingMovies
+                        .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
+                .forEach((movie) => { %>
+                    <li>
+                        <a href="/pelicula/<%= movie.movie_id %>">
+                            <%= movie.title %>
+                            <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
+                        </a>
+                    </li>
+                <% }); %>
+            </ul>
+        <% } else { %>
+            <p class="center-text">No ha dirigido ninguna película.</p>
+        <% } %>
+    <% } %>
+
+    <div id="inicio" class="center-text"><a href="/">Inicio</a></div>
+</main>
+
 </body>
 </html>
