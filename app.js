@@ -436,53 +436,83 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
 });
 
 // =========================================================
-/*  E) Guardar rating / opinión (tabla movies.movie_user) */
+/*  E) Guardar rating y opinión (tabla movies.movie_user) */
 // =========================================================
-app.post('/users/:userId/movies/:movieId/rate', requireAuth, async (req, res) => {
+app.post('/users/:userId/movies/:movieId/review', requireAuth, async (req, res) => {
     const userId = Number(req.params.userId);
     const movieId = Number(req.params.movieId);
-    const rating = Math.max(1, Math.min(5, parseInt(req.body.rating, 10) || 0));
-
-    if (!userId || req.session.user?.id !== userId) {
-        return res.status(403).send('No autorizado.');
-    }
-
-    try {
-        await db.query(
-            `INSERT INTO movies.movie_user (user_id, movie_id, rating)
-       VALUES ($1,$2,$3)
-       ON CONFLICT (user_id, movie_id)
-       DO UPDATE SET rating = EXCLUDED.rating, created_at = now()`,
-            [userId, movieId, rating]
-        );
-        res.redirect(`/pelicula/${movieId}?from=movie`);
-    } catch (e) {
-        console.error(e);
-        res.status(500).send('Error guardando rating');
-    }
-});
-
-app.post('/users/:userId/movies/:movieId/opinion', requireAuth, async (req, res) => {
-    const userId = Number(req.params.userId);
-    const movieId = Number(req.params.movieId);
+    const rating = parseInt(req.body.rating, 10);
     const opinion = (req.body.opinion || '').trim();
 
     if (!userId || req.session.user?.id !== userId) {
         return res.status(403).send('No autorizado.');
     }
 
+    // Validación: se requiere rating 1..5 y opinion no vacía
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5 || opinion.length === 0) {
+        return res.status(400).send('Debés ingresar una puntuación (1..5) y una opinión.');
+    }
+
     try {
         await db.query(
-            `INSERT INTO movies.movie_user (user_id, movie_id, opinion)
-       VALUES ($1,$2,$3)
+            `INSERT INTO movies.movie_user (user_id, movie_id, rating, opinion)
+       VALUES ($1,$2,$3,$4)
        ON CONFLICT (user_id, movie_id)
-       DO UPDATE SET opinion = EXCLUDED.opinion, created_at = now()`,
-            [userId, movieId, opinion]
+       DO UPDATE SET rating = EXCLUDED.rating,
+                     opinion = EXCLUDED.opinion,
+                     created_at = now()`,
+            [userId, movieId, rating, opinion]
         );
+
+        // (Opcional) log de actividad en MongoDB si más adelante lo habilitás:
+        // await logRatedMovie({ userId, movieId, movieTitle: '...', rating });
+        // await logWroteReview({ userId, movieId, movieTitle: '...', reviewText: opinion });
+
         res.redirect(`/pelicula/${movieId}?from=movie`);
     } catch (e) {
-        console.error(e);
-        res.status(500).send('Error guardando opinión');
+        console.error('Error guardando review:', e);
+        res.status(500).send('Error guardando calificación/opinión');
+    }
+});
+
+// ========== EDITAR (GET): ver y editar rating+opinión del usuario para una película ==========
+app.get('/users/:userId/movies/:movieId/edit', requireAuth, async (req, res) => {
+    const userId = Number(req.params.userId);
+    const movieId = Number(req.params.movieId);
+
+    if (!userId || req.session.user?.id !== userId) {
+        return res.status(403).send('No autorizado.');
+    }
+
+    try {
+        // Datos de la película
+        const mRs = await db.query(
+            `SELECT movie_id, title
+         FROM movies.movie
+        WHERE movie_id = $1`,
+            [movieId]
+        );
+        if (!mRs.rows.length) return res.status(404).send('Película no encontrada.');
+
+        // Rating/opinión existentes (si hay)
+        const muRs = await db.query(
+            `SELECT rating, opinion
+         FROM movies.movie_user
+        WHERE user_id = $1 AND movie_id = $2`,
+            [userId, movieId]
+        );
+
+        const movie = {
+            movie_id: mRs.rows[0].movie_id,
+            title: mRs.rows[0].title,
+            rating: muRs.rows[0]?.rating || null,
+            opinion: muRs.rows[0]?.opinion || ''
+        };
+
+        res.render('edit_movie_users', { user: { user_id: userId }, movie });
+    } catch (e) {
+        console.error('Error cargando edición de review:', e);
+        res.status(500).send('Error interno.');
     }
 });
 

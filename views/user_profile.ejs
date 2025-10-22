@@ -26,15 +26,29 @@
     <h2 class="center-text">Mis calificaciones y opiniones</h2>
     <% if ((reviews || []).length > 0) { %>
         <ul class="review-list">
-            <% reviews.forEach(r => { %>
-                <li class="review-item card">
-                    <div class="review-title">🎬 <a href="/pelicula/<%= r.movie_id %>"><%= r.title %></a></div>
-                    <% if (r.rating) { %><div class="review-rating">⭐ Puntaje: <%= r.rating %></div><% } %>
-                    <% if (r.opinion) { %><div class="review-text"><%= r.opinion %></div><% } %>
-                    <div style="margin-top:8px;">
-                        <a class="btn-outline" href="/users/<%= user.user_id %>/movies/<%= r.movie_id %>/edit">Editar</a>
+            <% reviews.forEach(r => {
+                const pct = r.rating ? Math.max(0, Math.min(100, Number(r.rating) / 5 * 100)) : 0;
+            %>
+            <li class="review-item card">
+                <div class="review-title">
+                    🎬 <a href="/pelicula/<%= r.movie_id %>?from=person"><%= r.title %></a>
+                </div>
+
+                <% if (r.rating) { %>
+                    <div class="review-rating" style="display:flex; align-items:center; justify-content:flex-start; gap:.4rem; margin:4px 0;">
+                        <span class="stars" aria-hidden="true"><i style="width:<%= pct %>%"></i></span>
+                        <span>(<%= r.rating %>/5)</span>
                     </div>
-                </li>
+                <% } %>
+
+                <% if (r.opinion) { %>
+                    <div class="review-text"><%= r.opinion %></div>
+                <% } %>
+
+                <div style="margin-top:8px;">
+                    <a class="btn-outline" href="/users/<%= user.user_id %>/movies/<%= r.movie_id %>/edit">Editar</a>
+                </div>
+            </li>
             <% }) %>
         </ul>
     <% } else { %>

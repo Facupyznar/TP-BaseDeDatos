@@ -16,7 +16,18 @@
 </header>
 
 <main class="container">
-    <h1 class="center-text"><%= movie.title %></h1>
+    <div class="title-row">
+        <h1 class="movie-title"><%= movie.title %></h1>
+
+        <% if (typeof average_rating !== 'undefined' && average_rating !== null) {
+            const pct = Math.max(0, Math.min(100, Number(average_rating) / 5 * 100));
+        %>
+        <div class="title-rating">
+            <span class="stars" aria-hidden="true"><i style="width:<%= pct %>%"></i></span>
+            <span class="avg-num">(<%= average_rating %>/5)</span>
+        </div>
+        <% } %>
+    </div>
 
     <h3 class="center-text">Fecha:</h3>
     <p class="center-text"><%= movie.release_date ? new Date(movie.release_date).toLocaleDateString() : '—' %></p>
@@ -81,21 +92,40 @@
 
     <% if (user) { %>
         <div class="review-section">
-            <h3 class="center-text">Tu interacción</h3>
+            <h3 class="center-text">Tu reseña</h3>
 
-            <form class="review-form" action="/users/<%= user.id %>/movies/<%= movie.movie_id %>/rate" method="post">
-                <label>Puntuación (1–5):</label>
-                <input type="number" name="rating" min="1" max="5" required>
-                <button type="submit" class="btn">Calificar</button>
-            </form>
+            <form class="review-form" action="/users/<%= user.id %>/movies/<%= movie.movie_id %>/review" method="post" style="text-align:center">
+                <!-- Estrellas 1..5 -->
+                <div class="star-rating" aria-label="Puntaje">
+                    <% for (let i = 5; i >= 1; i--) { %>
+                        <input type="radio" id="rate-<%= i %>" name="rating" value="<%= i %>" required>
+                        <label for="rate-<%= i %>" title="<%= i %> estrella<%= i>1?'s':'' %>">★</label>
+                    <% } %>
+                </div>
 
-            <form class="review-form" action="/users/<%= user.id %>/movies/<%= movie.movie_id %>/opinion" method="post">
-                <label>Comentario:</label>
-                <textarea name="opinion" rows="4" placeholder="Escribí tu opinión…"></textarea>
-                <button type="submit" class="btn">Enviar</button>
+                <div style="margin-top:10px;">
+                    <textarea name="opinion" rows="4" placeholder="Escribí tu opinión…" required style="width:min(640px,96%);"></textarea>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <button type="submit" class="btn">Publicar</button>
+                    <a class="btn-outline" href="/users/<%= user.id %>/movies/<%= movie.movie_id %>/edit">Editar mi reseña</a>
+                </div>
             </form>
         </div>
     <% } %>
+
+    <% if (typeof average_rating !== 'undefined' && average_rating !== null) {
+        const pct = Math.max(0, Math.min(100, Number(average_rating) / 5 * 100));
+    %>
+    <p class="center-text">
+        ⭐ Promedio de usuarios: <strong><%= average_rating %></strong>
+        <span class="stars" aria-hidden="true" style="margin-left:.25rem;">
+      <i style="width:<%= pct %>%"></i>
+    </span>
+    </p>
+    <% } %>
+
 
     <div id="inicio" class="center-text"><a href="/">Inicio</a></div>
 </main>

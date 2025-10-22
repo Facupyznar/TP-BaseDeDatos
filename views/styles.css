@@ -260,3 +260,48 @@ input:focus, textarea:focus, select:focus{
 /* Utilidades para centrar secciones de detalle */
 .center-text { text-align: center; }
 .section { margin-top: 12px; }
+
+/* === Estrellas (rating) === */
+.star-rating {
+    direction: rtl;
+    display: inline-flex;
+    gap: .15rem;
+    font-size: 2rem;
+    user-select: none;
+}
+.star-rating input[type="radio"] { display: none; }
+.star-rating label { color: #c8ccd0; cursor: pointer; line-height: 1; }
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label { color: #FFD700; }
+
+/* Barra de estrellas para promedios (solo visual) */
+.stars {
+    display:inline-block; position:relative; font-size:1.2rem; line-height:1;
+}
+.stars::before { content:"☆☆☆☆☆"; color:#c8ccd0; }
+.stars > i {
+    position:absolute; left:0; top:0; white-space:nowrap; overflow:hidden;
+}
+.stars > i::before { content:"★★★★★"; color:#FFD700; }
+
+
+.title-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    flex-wrap:wrap;
+    margin-bottom:.25rem; /* opcional: bajá un poco el espacio con el siguiente bloque */
+}
+.movie-title{
+    margin:0;             /* elimina márgenes extra del h1 */
+    text-align:center;    /* mantiene centro en wrap */
+}
+.title-rating{
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+}
+.title-rating .stars{ font-size:1.4rem; line-height:1; }
+.title-rating .avg-num{ color:var(--muted); font-weight:600; }

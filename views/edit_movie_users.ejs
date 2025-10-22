@@ -6,12 +6,6 @@
     <title>Editar Reseña de Película</title>
     <link rel="stylesheet" href="/styles.css">
     <style>
-        .star-rating{ direction: rtl; display:flex; justify-content:center; font-size:2em; gap:.1em }
-        .star-rating input[type="radio"]{ display:none }
-        .star-rating label{ color:#ccc; cursor:pointer; }
-        .star-rating input[type="radio"]:checked ~ label,
-        .star-rating label:hover,
-        .star-rating label:hover ~ label{ color:#FFD700 }
         .edit-wrap{ width:min(720px,92vw); margin:40px auto; }
         .edit-head{ text-align:center; margin-bottom:12px }
         .back{ text-align:center; margin-top:18px }
@@ -28,27 +22,24 @@
 <main class="edit-wrap card">
     <h1 class="edit-head">Editar Reseña de: <%= movie.title %></h1>
 
-    <!-- Actualiza rating/opinion en PG (tabla movies.movie_user) -->
-    <form action="/users/<%= user.user_id %>/movies/<%= movie.movie_id %>?_method=PUT" method="POST">
-        <label for="rating"><strong>Puntuación</strong></label>
-        <div class="star-rating" id="rating">
+    <!-- Unificado: rating + opinión -->
+    <form action="/users/<%= user.user_id %>/movies/<%= movie.movie_id %>/review" method="POST" style="text-align:center">
+        <div class="star-rating" aria-label="Puntaje">
             <% for (let i = 5; i >= 1; i--) { %>
-                <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>" <%= Number(movie.rating) === i ? 'checked' : '' %> >
-                <label for="star<%= i %>">★</label>
+                <input type="radio" id="edit-star-<%= i %>" name="rating" value="<%= i %>" <%= Number(movie.rating) === i ? 'checked' : '' %> required>
+                <label for="edit-star-<%= i %>" title="<%= i %> estrella<%= i>1?'s':'' %>">★</label>
             <% } %>
         </div>
 
-        <label for="opinion" style="display:block; margin-top:12px;"><strong>Opinión</strong></label>
-        <textarea id="opinion" name="opinion" rows="5" placeholder="Escribí tu opinión…"><%= movie.opinion || '' %></textarea>
+        <div style="margin-top:12px;">
+            <textarea id="opinion" name="opinion" rows="5" placeholder="Escribí tu opinión…" required style="width:100%;"><%= movie.opinion || '' %></textarea>
+        </div>
 
         <div style="margin-top:12px">
             <button type="submit" class="btn">Guardar Cambios</button>
+            <a class="btn-outline" href="/pelicula/<%= movie.movie_id %>?from=movie">← Volver a la película</a>
         </div>
     </form>
-
-    <div class="back">
-        <a class="btn-outline" href="/users/<%= user.user_id %>/profile">← Volver a mi perfil</a>
-    </div>
 </main>
 
 </body>
