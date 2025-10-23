@@ -4,5 +4,5 @@ Ruta del tp pdf con las instrucciones: https://campusvirtual.austral.edu.ar/plug
 
 Como clonar un repositorio de GitHub: https://docs.github.com/es/repositories/creating-and-managing-repositories/cloning-a-repository
 
-Tenes que crearte un .env a la altura de la raiz para correr las cosas, el archivo .env.example no se toca
+Hay que crearse un archivo .env a la altura de la raiz para poder correr las cosas, el archivo .env.example no se toca
 Si o si se tiene que llamar .env porque sino el gitignore no lo va a ignorar y se rompe todo
