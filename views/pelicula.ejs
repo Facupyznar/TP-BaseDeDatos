@@ -86,9 +86,6 @@
         <% if (!movie.cast || !movie.cast.length) { %><li>—</li><% } %>
     </ul>
 
-    <% if (typeof average_rating !== 'undefined' && average_rating !== null) { %>
-        <p class="center-text">⭐ Promedio de usuarios: <strong><%= average_rating %></strong></p>
-    <% } %>
 
     <% if (user) { %>
         <div class="review-section">
@@ -113,17 +110,6 @@
                 </div>
             </form>
         </div>
-    <% } %>
-
-    <% if (typeof average_rating !== 'undefined' && average_rating !== null) {
-        const pct = Math.max(0, Math.min(100, Number(average_rating) / 5 * 100));
-    %>
-    <p class="center-text">
-        ⭐ Promedio de usuarios: <strong><%= average_rating %></strong>
-        <span class="stars" aria-hidden="true" style="margin-left:.25rem;">
-      <i style="width:<%= pct %>%"></i>
-    </span>
-    </p>
     <% } %>
 
 

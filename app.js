@@ -5,6 +5,10 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const { Pool } = require('pg');
 
+// === Mongoose y modelo de MongoDB ===
+const mongoose = require('mongoose');
+const Activity = require('./models/user_activity');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -48,6 +52,22 @@ const db = new Pool({
 });
 
 db.query(`SET search_path TO movies, public`).catch(() => {/* si falla, prefijamos en queries */});
+
+// === Conexion a MongoDB ===
+const conectarMongoDB = async () => {
+    try {
+        const mongoUri = process.env.MONGODB_URI || null;
+        if (!mongoUri) {
+            console.warn('⚠️ Advertencia: No se definió MONGODB_URI. Omitiendo conexión a MongoDB.');
+        }
+        await mongoose.connect(mongoUri)
+        console.log('¡Conectado exitosamente a MongoDB! ✅');
+    } catch (error) {
+        console.error('Error al conectar a MongoDB: ❌', error);
+    }
+};
+
+conectarMongoDB();
 
 // ======= Helpers =======
 function requireAuth(req, res, next) {
