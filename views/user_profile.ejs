@@ -55,31 +55,51 @@
         <p class="center-text">Todavía no calificaste ninguna película.</p>
     <% } %>
 
-    <!-- Timeline reciente desde MongoDB: user_activity -->
-    <h2 class="center-text">Actividad reciente</h2>
-    <% if ((activities || []).length > 0) { %>
-        <ul>
-            <% activities.forEach(a => { %>
-                <li class="card">
-                    <div style="text-align:center">
-                        <small style="color:var(--muted)"><%= new Date(a.timestamp).toLocaleString() %></small>
-                        <div>
-                            <% if (a.type === 'RATED_MOVIE') { %>
-                                Calificó la película <strong><%= a.details.movieTitle %></strong> con <strong><%= a.details.rating %></strong> ⭐
-                            <% } else if (a.type === 'WROTE_REVIEW') { %>
-                                Escribió una reseña para <strong><%= a.details.movieTitle %></strong>
-                            <% } else if (a.type === 'ADDED_TO_FAVORITES') { %>
-                                Añadió <strong><%= a.details.movieTitle %></strong> a favoritos
-                            <% } else { %>
-                                <em>Actividad</em>
-                            <% } %>
-                        </div>
-                    </div>
-                </li>
+    <h2 class="center-text">Películas favoritas</h2>
+    <% if ((favorites || []).length > 0) { %>
+        <ul class="review-list">
+            <% favorites.forEach(f => { %>
+            <li class="review-item card">
+                <div class="review-title">
+                    ⭐ <a href="/pelicula/<%= f.movie_id %>?from=profile"><%= f.title %></a>
+                </div>
+            </li>
             <% }) %>
         </ul>
     <% } else { %>
-        <p class="center-text">Sin actividad reciente.</p>
+        <p class="center-text">No tenés películas favoritas todavía.</p>
+    <% } %>
+
+    <!-- Timeline visible solo para administradores -->
+    <% if (isAdmin) { %>
+    <section class="timeline">
+        <h2>Actividad reciente del usuario</h2>
+
+        <% if ((activities || []).length === 0) { %>
+            <p>Sin actividad registrada todavía.</p>
+        <% } else { %>
+            <ul class="activity-list">
+                <% activities.forEach(a => { %>
+                    <li class="activity-item">
+                        <% if (a.type === 'RATED_MOVIE') { %>
+                            🎬 Calificó la película 
+                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a> 
+                            con <%= a.details.rating %> ⭐
+                        <% } else if (a.type === 'WROTE_REVIEW') { %>
+                            ✍️ Escribió una reseña sobre 
+                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a>
+                        <% } else if (a.type === 'ADDED_TO_FAVORITES') { %>
+                            ⭐ Añadió 
+                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a> 
+                            a sus favoritos
+                        <% } %>
+                        <br>
+                        <small class="timestamp"><%= new Date(a.timestamp).toLocaleString() %></small>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } %>
+    </section>
     <% } %>
 
     <% if (isAdmin){ %>

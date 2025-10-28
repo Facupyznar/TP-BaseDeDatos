@@ -448,7 +448,26 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
         const avg = ratingsRs.rows[0] || {};
         const comments = commentsRs.rows || [];
 
-        res.render('pelicula', { movie, comments, average_rating: avg.average_rating || null });
+        // Verificar si está en favoritos (si hay usuario logueado)
+        let isFavorite = false;
+        if (req.session && req.session.user && req.session.user.id) {
+          const favCheck = await db.query(
+            'SELECT 1 FROM movies.user_favorites WHERE user_id = $1 AND movie_id = $2',
+            [req.session.user.id, movieId]
+          );
+          isFavorite = favCheck.rows.length > 0;
+        }
+
+        // Agregar is_favorite al objeto movie
+        movie.is_favorite = isFavorite;
+
+        res.render('pelicula', {
+          movie: movie,
+          user: req.session.user || null,
+          average_rating: avg.average_rating,
+          ratings_count: avg.ratings_count,
+          comments: comments
+        });
     } catch (e) {
         console.error(e);
         res.status(500).send('Error al cargar los datos de la película.');
@@ -456,7 +475,7 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
 });
 
 // =========================================================
-/*  E) Guardar rating y opinión (tabla movies.movie_user) */
+//  E) Guardar rating y opinión (tabla movies.movie_user)
 // =========================================================
 app.post('/users/:userId/movies/:movieId/review', requireAuth, async (req, res) => {
     const userId = Number(req.params.userId);
@@ -474,26 +493,61 @@ app.post('/users/:userId/movies/:movieId/review', requireAuth, async (req, res) 
     }
 
     try {
+        // === 1️⃣ Guardar calificación/opinión en PostgreSQL ===
         await db.query(
             `INSERT INTO movies.movie_user (user_id, movie_id, rating, opinion)
-       VALUES ($1,$2,$3,$4)
-       ON CONFLICT (user_id, movie_id)
-       DO UPDATE SET rating = EXCLUDED.rating,
-                     opinion = EXCLUDED.opinion,
-                     created_at = now()`,
+             VALUES ($1,$2,$3,$4)
+             ON CONFLICT (user_id, movie_id)
+             DO UPDATE SET rating = EXCLUDED.rating,
+                           opinion = EXCLUDED.opinion,
+                           created_at = now()`,
             [userId, movieId, rating, opinion]
         );
 
-        // (Opcional) log de actividad en MongoDB si más adelante lo habilitás:
-        // await logRatedMovie({ userId, movieId, movieTitle: '...', rating });
-        // await logWroteReview({ userId, movieId, movieTitle: '...', reviewText: opinion });
+        // === 2️⃣ Registrar actividad en MongoDB (timeline del usuario) ===
+        try {
+            // Obtener el título de la película desde PostgreSQL
+            const movieTitleResult = await db.query(
+                `SELECT title FROM movies.movie WHERE movie_id = $1`,
+                [movieId]
+            );
+            const movieTitle = movieTitleResult.rows[0]?.title || 'Película desconocida';
 
+            // --- Evento de calificación ---
+            await Activity.create({
+                userId,
+                type: 'RATED_MOVIE',
+                details: {
+                    movieId,
+                    movieTitle,
+                    rating
+                }
+            });
+
+            // --- Evento de reseña ---
+            await Activity.create({
+                userId,
+                type: 'WROTE_REVIEW',
+                details: {
+                    movieId,
+                    movieTitle,
+                    reviewText: opinion
+                }
+            });
+
+        } catch (mongoErr) {
+            console.warn('⚠️ No se pudo registrar la actividad en MongoDB:', mongoErr.message);
+        }
+
+        // Redirigir al detalle de película
         res.redirect(`/pelicula/${movieId}?from=movie`);
+
     } catch (e) {
         console.error('Error guardando review:', e);
         res.status(500).send('Error guardando calificación/opinión');
     }
 });
+
 
 // ========== EDITAR (GET): ver y editar rating+opinión del usuario para una película ==========
 app.get('/users/:userId/movies/:movieId/edit', requireAuth, async (req, res) => {
@@ -572,11 +626,34 @@ app.get('/profile/:userId', async (req, res) => {
 
         const reviews = await getPgUserReviews(db, userId);
 
-        // Por ahora sin Mongo
-        const activities = [];
+        // Actividades desde MongoDB
+        let activities = [];
         const isAdminFlag = isAdmin(req);
 
-        res.render('user_profile', { user, reviews, activities, isAdmin: isAdminFlag });
+        if (isAdminFlag) {
+        activities = await Activity.find({ userId })
+            .sort({ timestamp: -1 })
+            .limit(30)
+            .lean();
+        }
+
+        // Agregar consulta de favoritos (CAMBIADO: pool → db)
+        const favoritesResult = await db.query(`
+          SELECT m.movie_id, m.title, m.release_date
+          FROM movies.user_favorites uf
+          JOIN movies.movie m ON uf.movie_id = m.movie_id
+          WHERE uf.user_id = $1
+          ORDER BY uf.added_at DESC
+          LIMIT 10
+        `, [userId]);
+
+        res.render('user_profile', {
+          user,
+          reviews,
+          favorites: favoritesResult.rows,
+          activities,
+          isAdmin: isAdminFlag
+        });
     } catch (e) {
         console.error('Error cargando perfil:', e);
         res.status(500).send('Error interno al cargar el perfil.');
@@ -632,4 +709,71 @@ app.listen(port, async () => {
     } catch (e) {
         console.error('No se pudo conectar a PostgreSQL:', e);
     }
+});
+
+// Ruta para agregar/quitar de favoritos (toggle automático)
+app.post('/users/:userId/movies/:movieId/favorite', requireAuth, async (req, res) => {
+  try {
+    const { userId, movieId } = req.params;
+
+    // Verificar que el usuario sea el correcto
+    if (req.session.user.id !== Number(userId)) {
+      return res.status(403).json({ success: false, error: 'No autorizado' });
+    }
+
+    // Verificar si ya está en favoritos (CAMBIADO: pool → db)
+    const check = await db.query(
+      'SELECT 1 FROM movies.user_favorites WHERE user_id = $1 AND movie_id = $2',
+      [userId, movieId]
+    );
+
+    let action;
+    if (check.rows.length > 0) {
+      // Ya está en favoritos → quitar
+      await db.query(
+        'DELETE FROM movies.user_favorites WHERE user_id = $1 AND movie_id = $2',
+        [userId, movieId]
+      );
+      action = 'REMOVED';
+    } else {
+      // No está en favoritos → agregar
+      await db.query(
+        'INSERT INTO movies.user_favorites (user_id, movie_id, added_at) VALUES ($1, $2, NOW())',
+        [userId, movieId]
+      );
+      action = 'ADDED';
+
+      // Registrar en timeline (MongoDB) solo cuando se agrega
+      if (mongoose.connection.readyState === 1) {
+        const movieResult = await db.query('SELECT title FROM movies.movie WHERE movie_id = $1', [movieId]);
+        await Activity.create({
+          userId: parseInt(userId),
+          type: 'ADDED_TO_FAVORITES',
+          details: {
+            movieId: parseInt(movieId),
+            movieTitle: movieResult.rows[0]?.title || 'Película desconocida'
+          },
+          timestamp: new Date()
+        });
+      }
+    }
+
+    res.json({ success: true, action });
+  } catch (err) {
+    console.error('Error al gestionar favoritos:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// En la sección donde defines el schema de Activity:
+
+const activitySchema = new mongoose.Schema({
+  userId: { type: Number, required: true },
+  type: { 
+    type: String, 
+    required: true,
+    enum: ['RATED_MOVIE', 'WROTE_REVIEW', 'ADDED_TO_FAVORITES'] // Agregar este tipo
+  },
+  details: mongoose.Schema.Types.Mixed,
+  timestamp: { type: Date, default: Date.now }
 });

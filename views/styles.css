@@ -305,3 +305,36 @@ input:focus, textarea:focus, select:focus{
 }
 .title-rating .stars{ font-size:1.4rem; line-height:1; }
 .title-rating .avg-num{ color:var(--muted); font-weight:600; }
+
+/* === Botón de favoritos === */
+.favorite-btn {
+  background-color: #e6e6e6;
+  border: none;
+  padding: 8px 14px;
+  font-size: 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.favorite-btn:hover {
+  background-color: #d4d4d4;
+}
+
+.favorite-btn.favorited {
+  background-color: gold;
+  color: #000;
+  font-weight: bold;
+}
+
+.favorite-btn.favorited:hover {
+  background-color: #f5c400;
+}
+
+#fav-icon {
+  font-size: 1.2em;
+}
