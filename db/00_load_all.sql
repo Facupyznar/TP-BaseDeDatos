@@ -56,5 +56,7 @@
 \echo 'n14. Loading movie_user table...'
 \i 14_movie_user.sql
 
+\echo 'n15. Loading user_favorites table...'
+\i 15_user_favorites.sql
 
 \echo '\n--- Database setup complete! ---'

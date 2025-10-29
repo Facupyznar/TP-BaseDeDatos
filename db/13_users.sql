@@ -6,7 +6,8 @@ CREATE TABLE movies.users (
       user_username  VARCHAR(50)   NOT NULL UNIQUE,
       user_name      VARCHAR(150)  NOT NULL,
       user_email     VARCHAR(320)  NOT NULL UNIQUE,
-      password_hash  TEXT  NOT NULL
+      password_hash  TEXT  NOT NULL,
+      is_admin      BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
 
