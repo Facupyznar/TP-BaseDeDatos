@@ -9,6 +9,9 @@ const { Pool } = require('pg');
 const mongoose = require('mongoose');
 const Activity = require('./models/user_activity');
 
+// === TMDb Helper para imágenes de películas ===
+const { enrichMoviesWithPosters } = require('./models/tmdb_helper');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -20,6 +23,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.get('/styles.css', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'styles.css'));
 });
+
+// ✅ Servir la carpeta de estilos
+app.use('/styles', express.static(path.join(__dirname, 'views', 'styles')));
 
 // ✅ Servir imágenes desde /views/imgs
 app.use('/imgs', express.static(path.join(__dirname, 'views', 'imgs')));
@@ -96,8 +102,41 @@ function requireAdminOrFromApp(req, res, next) {
 // =========================================================
 //  Rutas básicas
 // =========================================================
-app.get('/', (req, res) => {
-    res.render('index');
+app.get('/', async (req, res) => {
+    try {
+        // Obtener películas por género para los carouseles
+        const genres = ['Action', 'Comedy', 'Drama', 'Thriller', 'Science Fiction', 'Romance'];
+        const carousels = [];
+
+        for (const genre of genres) {
+            const { rows } = await db.query(
+                `SELECT DISTINCT m.movie_id, m.title, m.release_date, m.vote_average, m.vote_count
+                 FROM movies.movie m
+                 JOIN movies.movie_genres mg ON mg.movie_id = m.movie_id
+                 JOIN movies.genre g ON g.genre_id = mg.genre_id
+                 WHERE g.genre_name = $1
+                 ORDER BY m.vote_average DESC NULLS LAST, m.vote_count DESC NULLS LAST
+                 LIMIT 15`,
+                [genre]
+            );
+
+            if (rows.length > 0) {
+                // Enriquecer películas con datos de TMDb (incluye posters)
+                const enrichedMovies = await enrichMoviesWithPosters(rows);
+
+                carousels.push({
+                    title: genre,
+                    movies: enrichedMovies,
+                    carouselId: `carousel-${genre.toLowerCase().replace(/\s+/g, '-')}`
+                });
+            }
+        }
+
+        res.render('index', { carousels });
+    } catch (error) {
+        console.error('Error al cargar películas:', error);
+        res.render('index', { carousels: [] });
+    }
 });
 
 app.get('/login', (req, res) => {
@@ -769,8 +808,8 @@ app.post('/users/:userId/movies/:movieId/favorite', requireAuth, async (req, res
 
 const activitySchema = new mongoose.Schema({
   userId: { type: Number, required: true },
-  type: { 
-    type: String, 
+  type: {
+    type: String,
     required: true,
     enum: ['RATED_MOVIE', 'WROTE_REVIEW', 'ADDED_TO_FAVORITES'] // Agregar este tipo
   },
