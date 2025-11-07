@@ -8,26 +8,7 @@
 </head>
 <body>
 
-<!-- Header sin “casa” (no hace falta en Home) -->
-<header class="header">
-    <!-- Menú hamburguesa -->
-    <button class="menu-button" id="menuButton" onclick="toggleMenu()">
-        <div></div><div></div><div></div>
-    </button>
-
-    <nav class="menu-content" id="menuContent">
-        <% if (!user) { %>
-            <a href="/login" class="menu">Iniciar sesión</a>
-            <a href="/register" class="menu">Registrarse</a>
-        <% } else if (isAdmin) { %>
-            <a href="/users" class="menu">Lista de usuarios</a>
-            <form action="/logout" method="POST"><button class="menu" type="submit">Cerrar sesión</button></form>
-        <% } else { %>
-            <a href="/profile/<%= user.id %>" class="menu">Mi perfil</a>
-            <form action="/logout" method="POST"><button class="menu" type="submit">Cerrar sesión</button></form>
-        <% } %>
-    </nav>
-</header>
+<%- include('components/NavBar.ejs', { user: (typeof user !== 'undefined' ? user : null), isAdmin: (typeof isAdmin !== 'undefined' ? isAdmin : false) }) %>
 
 <!-- Hero centrado -->
 <main class="home">
@@ -45,12 +26,38 @@
     </form>
 </main>
 
+<!-- Carouseles de películas por género -->
+<div class="carousels-wrapper">
+    <% if (typeof carousels !== 'undefined' && carousels.length > 0) { %>
+        <% carousels.forEach(carousel => { %>
+            <%- include('components/Carousel.ejs', {
+                title: carousel.title,
+                movies: carousel.movies,
+                carouselId: carousel.carouselId
+            }) %>
+        <% }) %>
+    <% } %>
+</div>
+
 <script>
     function toggleMenu() {
         const btn = document.getElementById("menuButton");
         const menu = document.getElementById("menuContent");
         btn.classList.toggle("open");
         menu.classList.toggle("open");
+    }
+
+    function scrollCarousel(carouselId, direction) {
+        const container = document.getElementById(carouselId);
+        const track = container.querySelector('.carousel-track');
+        const scrollAmount = 400; // píxeles a desplazar
+
+        if (track) {
+            track.scrollBy({
+                left: direction * scrollAmount,
+                behavior: 'smooth'
+            });
+        }
     }
 </script>
 
