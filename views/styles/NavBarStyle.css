@@ -1,0 +1,98 @@
+/* --- Estilos Generales del Navbar --- */
+/* Usamos flexbox para alinear los elementos horizontalmente */
+.main-nav {
+    display: flex;
+    justify-content: space-between; /* Empuja la sección izq. y der. a los extremos */
+    align-items: center;
+    padding: 12px 30px; /* Padding vertical y horizontal */
+    background-color: #0d253f; /* Color azul oscuro principal de TMDB */
+    color: #ffffff; /* Color de texto general */
+    font-family: Arial, sans-serif; /* Una fuente limpia */
+}
+
+/* --- Secciones Izquierda y Derecha --- */
+/* Contenedores para los dos lados de la barra */
+.nav-left,
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 25px; /* Espacio entre los elementos de cada sección */
+}
+
+/* --- Logo (Tu título "MovieWeb") --- */
+.logo {
+    font-size: 1.8rem; /* Tamaño grande */
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none; /* Sin subrayado */
+}
+
+/* --- Menú principal de navegación (Películas, Series...) --- */
+.main-menu {
+    display: flex;
+    gap: 20px; /* Espacio entre los enlaces del menú */
+}
+
+/* --- Estilo base para enlaces --- */
+/* Esto se aplica a todos los <a> y al botón de logout */
+.menu-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600; /* Texto en negrita */
+    font-size: 1rem;
+    padding: 5px 0;
+    transition: color 0.2s ease; /* Transición suave para el hover */
+}
+
+/* Efecto hover inspirado en TMDB */
+.menu-link:hover {
+    color: #01b4e4; /* Color cian de TMDB */
+}
+
+/* --- Selector de Idioma (Estático) --- */
+/* Estilo para el "ES" cuadrado de la imagen */
+.lang-switch {
+    border: 1px solid #ffffff;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: default;
+}
+
+/* --- Formulario de Logout --- */
+.logout-form {
+    margin: 0; /* Resetea el margen del formulario */
+    padding: 0;
+    display: inline; /* Para que se alinee bien */
+}
+
+/* --- Botón de Logout (estilizado como enlace) --- */
+/* Hacemos que el botón de "Cerrar sesión" parezca un enlace más */
+.logout-btn {
+    background: none;
+    border: none;
+    font-family: inherit; /* Hereda la fuente del nav */
+    cursor: pointer;
+    margin: 0;
+    padding: 0; /* Resetea padding del botón */
+}
+
+/* --- Icono de Búsqueda --- */
+.search-icon {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding : 5px;
+}
+
+.search-icon svg {
+    width: 20px; /* Tamaño del icono */
+    height: 20px;
+    fill: currentColor; /* Hereda el color del enlace (blanco) */
+    transition: color 0.2s ease;
+}
+
+.search-icon:hover {
+    color: #01b4e4; /* Color cian en hover */
+}

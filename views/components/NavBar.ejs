@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="/styles/NavBarStyle.css">
+<header class="main-nav">
+
+    <div class="nav-left">
+        <a href="/" class="logo">MovieWeb</a>
+
+        <nav class="main-menu">
+            <a href="#" class="menu-link">Películas</a>
+            <a href="#" class="menu-link">Series</a>
+            <a href="#" class="menu-link">Gente</a>
+        </nav>
+    </div>
+
+    <div class="nav-right">
+        <div class="lang-switch">ES</div>
+
+        <% if (!user) { %>
+            <a href="/login" class="menu-link">Iniciar sesión</a>
+            <a href="/register" class="menu-link">Registrarse</a>
+        <% } else if (isAdmin) { %>
+            <a href="/users" class="menu-link">Lista de usuarios</a>
+            <form action="/logout" method="POST" class="logout-form">
+                <button class="menu-link logout-btn" type="submit">Cerrar sesión</button>
+            </form>
+        <% } else { %>
+            <a href="/profile/<%= user.id %>" class="menu-link">Mi perfil</a>
+            <form action="/logout" method="POST" class="logout-form">
+                <button class="menu-link logout-btn" type="submit">Cerrar sesión</button>
+            </form>
+        <% } %>
+
+        <a href="/buscar" class="search-icon" aria-label="Buscar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+        </a>
+    </div>
+</header>
