@@ -239,6 +239,13 @@ input:focus, textarea:focus, select:focus{
     color: var(--muted);
 }
 
+/* ===== Carousels Wrapper ===== */
+.carousels-wrapper {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 720px){
     .menu-button{ right:14px; top:14px }
