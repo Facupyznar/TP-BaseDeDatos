@@ -1,0 +1,57 @@
+<link rel="stylesheet" href="/styles/CarouselStyle.css">
+
+<!-- Carousel Component -->
+<section class="carousel-section">
+    <div class="carousel-header">
+        <h2 class="carousel-title"><%= title %></h2>
+        <div class="carousel-nav">
+            <button class="carousel-btn carousel-btn-prev" onclick="scrollCarousel('<%= carouselId %>', -1)" aria-label="Anterior">
+                ‹
+            </button>
+            <button class="carousel-btn carousel-btn-next" onclick="scrollCarousel('<%= carouselId %>', 1)" aria-label="Siguiente">
+                ›
+            </button>
+        </div>
+    </div>
+
+    <div class="carousel-container" id="<%= carouselId %>">
+        <div class="carousel-track">
+            <% if (movies && movies.length > 0) { %>
+                <% movies.forEach(movie => {
+                    // Usar poster_url de TMDb si está disponible, sino usar placeholder
+                    let posterUrl;
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else {
+                        // Fallback a Lorem Picsum con seed único
+                        const seed = movie.movie_id || movie.title;
+                        posterUrl = `https://picsum.photos/seed/${seed}/342/513`;
+                    }
+                %>
+                    <a href="/pelicula/<%= movie.movie_id %>?from=movie" class="carousel-card">
+                        <div class="carousel-card-poster">
+                            <img src="<%= posterUrl %>"
+                                 alt="<%= movie.title %>"
+                                 loading="lazy"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            <div class="carousel-card-no-poster" style="display: none;">
+                                <span>🎬</span>
+                                <p><%= movie.title.substring(0, 20) %><%= movie.title.length > 20 ? '...' : '' %></p>
+                            </div>
+                        </div>
+                        <div class="carousel-card-info">
+                            <h3 class="carousel-card-title"><%= movie.title %></h3>
+                            <% if (movie.release_date) { %>
+                                <p class="carousel-card-year"><%= new Date(movie.release_date).getFullYear() %></p>
+                            <% } %>
+                        </div>
+                    </a>
+                <% }) %>
+            <% } else { %>
+                <div class="carousel-empty">
+                    <p>No hay películas disponibles</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
