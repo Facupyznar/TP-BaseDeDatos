@@ -1,0 +1,229 @@
+/* Actor Page Styles */
+
+.actor-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 20px 40px;
+}
+
+/* Header del actor */
+.actor-header {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .actor-header {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 24px;
+    }
+}
+
+/* Foto del actor */
+.actor-profile {
+    position: sticky;
+    top: 80px;
+    align-self: start;
+}
+
+.actor-photo {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: block;
+}
+
+.actor-photo-placeholder {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+}
+
+/* Información del actor */
+.actor-info {
+    min-width: 0;
+}
+
+.actor-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 30px 0;
+    color: #1a1a1a;
+}
+
+.actor-section {
+    margin-bottom: 32px;
+}
+
+.actor-section h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: #2c3e50;
+}
+
+.biography {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #555;
+    text-align: justify;
+}
+
+/* Información personal */
+.personal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-item span {
+    font-size: 1rem;
+    color: #2c3e50;
+}
+
+/* Sección de filmografía */
+.filmography-section {
+    margin-bottom: 60px;
+}
+
+.filmography-section h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 24px 0;
+    color: #1a1a1a;
+    padding-left: 8px;
+    border-left: 4px solid #667eea;
+}
+
+/* Grid de películas */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 24px;
+}
+
+@media (max-width: 640px) {
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 16px;
+    }
+}
+
+.movie-card {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.movie-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.movie-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    position: relative;
+    overflow: hidden;
+    background: #f0f0f0;
+    border-radius: 8px;
+}
+
+.movie-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.movie-poster-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+}
+
+.movie-info {
+    padding: 12px 4px;
+}
+
+.movie-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: #1a1a1a;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.character-name,
+.movie-year {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Botón volver */
+.back-home {
+    text-align: center;
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid #e9ecef;
+}
+
+.back-home a {
+    display: inline-block;
+    padding: 12px 32px;
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.back-home a:hover {
+    background: #5568d3;
+    transform: scale(1.05);
+}

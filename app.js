@@ -12,6 +12,9 @@ const Activity = require('./models/user_activity');
 // === TMDb Helper para imágenes de películas ===
 const { enrichMoviesWithPosters } = require('./models/tmdb_helper');
 
+const { enrichPersonData, calculateAge } = require('./models/tmdb_person_helper');
+
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -151,7 +154,7 @@ app.post('/login', async (req, res) => {
         const { rows } = await db.query(
             `SELECT user_id, user_username, user_name, user_email, password_hash, is_admin
          FROM movies.users
-        WHERE user_username = $1`,
+         WHERE user_username = $1`,
             [username]
         );
         const user = rows[0];
@@ -342,9 +345,10 @@ app.get('/buscar', async (req, res) => {
 app.get('/actor/:id', requireAdminOrFromApp, async (req, res) => {
     const id = Number(req.params.id);
     try {
-        const { rows } = await db.query(
+        // Obtener películas donde actuó
+        const actingQuery = await db.query(
             `SELECT DISTINCT p.person_name AS actor_name,
-              m.movie_id, m.title, m.release_date, mc.character_name
+              m.movie_id, m.title, m.release_date, mc.character_name, mc.cast_order
          FROM movies.movie m
          JOIN movies.movie_cast mc ON m.movie_id = mc.movie_id
          JOIN movies.person p      ON p.person_id = mc.person_id
@@ -352,8 +356,45 @@ app.get('/actor/:id', requireAdminOrFromApp, async (req, res) => {
         ORDER BY m.release_date DESC NULLS LAST`,
             [id]
         );
-        const actorName = rows.length ? rows[0].actor_name : '';
-        res.render('actor', { actorName, movies: rows });
+
+        // Obtener películas que dirigió
+        const directingQuery = await db.query(
+            `SELECT DISTINCT p.person_name AS director_name,
+              m.movie_id, m.title, m.release_date
+         FROM movies.movie m
+         JOIN movies.movie_crew mcr ON m.movie_id = mcr.movie_id
+         JOIN movies.person p       ON p.person_id = mcr.person_id
+        WHERE mcr.job = 'Director' AND mcr.person_id = $1
+        ORDER BY m.release_date DESC NULLS LAST`,
+            [id]
+        );
+
+        const actingMovies = actingQuery.rows;
+        const directingMovies = directingQuery.rows;
+
+        const actorName = actingMovies.length > 0
+            ? actingMovies[0].actor_name
+            : (directingMovies.length > 0 ? directingMovies[0].director_name : '');
+
+        // Enriquecer películas con posters
+        const enrichedActingMovies = await enrichMoviesWithPosters(actingMovies);
+        const enrichedDirectingMovies = await enrichMoviesWithPosters(directingMovies);
+
+        // Obtener información adicional del actor desde TMDB
+        let personDetails = null;
+        if (actorName) {
+            personDetails = await enrichPersonData(actorName);
+            if (personDetails) {
+                personDetails.age = calculateAge(personDetails.birthday, personDetails.deathday);
+            }
+        }
+
+        res.render('actor', {
+            actorName,
+            movies: enrichedActingMovies,
+            directingMovies: enrichedDirectingMovies,
+            personDetails
+        });
     } catch (e) {
         console.error(e);
         res.status(500).send('Error al cargar las películas del actor.');
@@ -397,7 +438,7 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
         if (!base.rows.length) return res.status(404).send('Película no encontrada.');
         const m = base.rows[0];
 
-        const movie = {
+        let movie = {
             movie_id: m.movie_id,
             title: m.title,
             overview: m.overview,
@@ -414,6 +455,10 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
             countries: [],
         };
 
+        const enrichedMovieArray = await enrichMoviesWithPosters([movie]);
+        movie = enrichedMovieArray[0];
+
+
         // 2) Paralelo: elenco, crew, géneros, idiomas, países
         const [castRs, crewRs, genresRs, langsRs, countriesRs, ratingsRs, commentsRs] = await Promise.all([
             db.query(
@@ -421,7 +466,7 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
                 mc.character_name, mc.cast_order
            FROM movies.movie_cast mc
            JOIN movies.person p ON p.person_id = mc.person_id
-          WHERE mc.movie_id = $1`,
+           WHERE mc.movie_id = $1`,
                 [movieId]
             ),
             db.query(
@@ -437,7 +482,7 @@ app.get('/pelicula/:id', requireAdminOrFromApp, async (req, res) => {
                 `SELECT g.genre_name
            FROM movies.movie_genres mg
            JOIN movies.genre g ON g.genre_id = mg.genre_id
-          WHERE mg.movie_id = $1
+          WHERE mg.movie_id = $1    
           ORDER BY g.genre_name`,
                 [movieId]
             ),

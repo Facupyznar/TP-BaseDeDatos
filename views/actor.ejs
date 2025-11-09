@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="utf-8"/>
-    <title>Películas con <%= actorName %></title>
+    <title><%= actorName %> - MovieWeb</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles/ActorStyle.css">
 </head>
 <body>
 
@@ -14,48 +15,162 @@
     </a>
 </header>
 
-<main class="container">
-    <h2 class="center-text">Películas con <%= actorName %></h2>
+<main class="actor-page">
+    <div class="actor-header">
+        <div class="actor-profile">
+            <% if (personDetails && personDetails.profile_url) { %>
+                <img src="<%= personDetails.profile_url %>" alt="<%= actorName %>" class="actor-photo">
+            <% } else { %>
+                <div class="actor-photo-placeholder">
+                    <span>👤</span>
+                </div>
+            <% } %>
+        </div>
 
-    <% if ((movies || []).length > 0) { %>
-        <ul class="center-text">
-            <% movies
-                    .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
-            .forEach((movie) => { %>
-                <li>
-                    <a href="/pelicula/<%= movie.movie_id %>?from=person">
-                        <%= movie.title %>
-                        <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
-                    </a>
-                    <% if (movie.character_name) { %> — <em><%= movie.character_name %></em><% } %>
-                </li>
-            <% }); %>
-        </ul>
-    <% } else { %>
-        <p class="center-text">No ha actuado en ninguna película.</p>
-    <% } %>
+        <div class="actor-info">
+            <h1 class="actor-name"><%= actorName %></h1>
 
-    <% if (typeof directingMovies !== 'undefined') { %>
-        <h2 class="center-text">Películas dirigidas por <%= actorName %></h2>
-        <% if (directingMovies.length > 0) { %>
-            <ul class="center-text">
-                <% directingMovies
-                        .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
-                .forEach((movie) => { %>
-                    <li>
-                        <a href="/pelicula/<%= movie.movie_id %>?from=person">
-                            <%= movie.title %>
-                            <% if (movie.release_date) { %> (<%= new Date(movie.release_date).getFullYear() %>)<% } %>
-                        </a>
-                    </li>
+            <% if (personDetails && personDetails.biography) { %>
+                <div class="actor-section">
+                    <h2>Biografía</h2>
+                    <p class="biography"><%= personDetails.biography %></p>
+                </div>
+            <% } %>
+
+            <div class="actor-section">
+                <h2>Información personal</h2>
+                <div class="personal-info">
+                    <% if (personDetails && personDetails.known_for_department) { %>
+                        <div class="info-item">
+                            <strong>Conocido por</strong>
+                            <span><%= personDetails.known_for_department === 'Acting' ? 'Interpretación' : personDetails.known_for_department %></span>
+                        </div>
+                    <% } %>
+
+                    <% if (movies && movies.length > 0) { %>
+                        <div class="info-item">
+                            <strong>Créditos conocidos</strong>
+                            <span><%= movies.length %></span>
+                        </div>
+                    <% } %>
+
+                    <% if (personDetails && personDetails.gender) { %>
+                        <div class="info-item">
+                            <strong>Sexo</strong>
+                            <span><%= personDetails.gender === 2 ? 'Masculino' : (personDetails.gender === 1 ? 'Femenino' : 'No especificado') %></span>
+                        </div>
+                    <% } %>
+
+                    <% if (personDetails && personDetails.birthday) { %>
+                        <div class="info-item">
+                            <strong>Fecha de nacimiento</strong>
+                            <span>
+                                <%= new Date(personDetails.birthday).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                                <% if (personDetails.age && !personDetails.deathday) { %>
+                                    (<%= personDetails.age %> años)
+                                <% } %>
+                            </span>
+                        </div>
+                    <% } %>
+
+                    <% if (personDetails && personDetails.deathday) { %>
+                        <div class="info-item">
+                            <strong>Fecha de fallecimiento</strong>
+                            <span>
+                                <%= new Date(personDetails.deathday).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+                                <% if (personDetails.age) { %>
+                                    (<%= personDetails.age %> años)
+                                <% } %>
+                            </span>
+                        </div>
+                    <% } %>
+
+                    <% if (personDetails && personDetails.place_of_birth) { %>
+                        <div class="info-item">
+                            <strong>Lugar de nacimiento</strong>
+                            <span><%= personDetails.place_of_birth %></span>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Películas como actor -->
+    <% if (movies && movies.length > 0) { %>
+        <section class="filmography-section">
+            <h2>Interpretación</h2>
+            <div class="movies-grid">
+                <% movies.forEach((movie) => {
+                    let posterUrl;
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else {
+                        const seed = movie.movie_id || movie.title;
+                        posterUrl = `https://picsum.photos/seed/${seed}/200/300`;
+                    }
+                %>
+                <a href="/pelicula/<%= movie.movie_id %>?from=person" class="movie-card">
+                    <div class="movie-poster">
+                        <img src="<%= posterUrl %>"
+                             alt="<%= movie.title %>"
+                             loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="movie-poster-placeholder" style="display: none;">
+                            <span>🎬</span>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <h3 class="movie-title"><%= movie.title %></h3>
+                        <% if (movie.character_name) { %>
+                            <p class="character-name">como <%= movie.character_name %></p>
+                        <% } %>
+                    </div>
+                </a>
                 <% }); %>
-            </ul>
-        <% } else { %>
-            <p class="center-text">No ha dirigido ninguna película.</p>
-        <% } %>
+            </div>
+        </section>
     <% } %>
 
-    <div id="inicio" class="center-text"><a href="/">Inicio</a></div>
+    <!-- Películas como director -->
+    <% if (directingMovies && directingMovies.length > 0) { %>
+        <section class="filmography-section">
+            <h2>Películas dirigidas</h2>
+            <div class="movies-grid">
+                <% directingMovies.forEach((movie) => {
+                    let posterUrl;
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else {
+                        const seed = movie.movie_id || movie.title;
+                        posterUrl = `https://picsum.photos/seed/${seed}/200/300`;
+                    }
+                %>
+                <a href="/pelicula/<%= movie.movie_id %>?from=person" class="movie-card">
+                    <div class="movie-poster">
+                        <img src="<%= posterUrl %>"
+                             alt="<%= movie.title %>"
+                             loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="movie-poster-placeholder" style="display: none;">
+                            <span>🎬</span>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <h3 class="movie-title"><%= movie.title %></h3>
+                        <% if (movie.release_date) { %>
+                            <p class="movie-year"><%= new Date(movie.release_date).getFullYear() %></p>
+                        <% } %>
+                    </div>
+                </a>
+                <% }); %>
+            </div>
+        </section>
+    <% } %>
+
+    <div class="back-home">
+        <a href="/">← Volver al inicio</a>
+    </div>
 </main>
 
 </body>
