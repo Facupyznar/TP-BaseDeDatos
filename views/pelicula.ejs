@@ -5,167 +5,183 @@
     <title><%= movie.title %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles/PeliculaStyle.css">
 </head>
 <body>
 
-<header class="header">
-    <!-- Casa pequeña -->
-    <a class="home-btn" href="/">
-        <img src="/imgs/casa3.png" alt="Inicio">
-    </a>
-</header>
+<%- include('components/NavBar.ejs', { user: (typeof user !== 'undefined' ? user : null), isAdmin: (typeof isAdmin !== 'undefined' ? isAdmin : false) }) %>
 
-<main class="container">
-    <div class="title-row">
-        <h1 class="movie-title"><%= movie.title %></h1>
 
-        <% if (typeof average_rating !== 'undefined' && average_rating !== null) {
-            const pct = Math.max(0, Math.min(100, Number(average_rating) / 5 * 100));
-        %>
-        <div class="title-rating">
-            <span class="stars" aria-hidden="true"><i style="width:<%= pct %>%"></i></span>
-            <span class="avg-num">(<%= average_rating %>/5)</span>
+
+<div class="movie-hero" style="background-image: url('https://image.tmdb.org/t/p/original<%= movie.backdrop_path %>');">
+    <div class="hero-overlay"></div> <div class="hero-content">
+        <div class="hero-poster">
+            <%
+            // Usar la misma lógica que Carousel.ejs
+            let posterUrl;
+            if (movie.poster_url) {
+                posterUrl = movie.poster_url;
+            } else {
+                // Fallback a Lorem Picsum con seed único
+                const seed = movie.movie_id || movie.title;
+                posterUrl = `https://picsum.photos/seed/${seed}/300/450`;
+            }
+            %>
+
+            <img src="<%= posterUrl %>"
+                 alt="<%= movie.title %>"
+                 loading="lazy"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+            <div class="carousel-card-no-poster" style="display: none; width: 300px; height: 450px; border-radius: 12px; margin: 0;">
+                <span>🎬</span>
+                <p><%= movie.title.substring(0, 20) %><%= movie.title.length > 20 ? '...' : '' %></p>
+            </div>
+
         </div>
+
+        <div class="hero-details">
+
+            <div class="title-row">
+                <h1 class="movie-title"><%= movie.title %></h1>
+                <% if (typeof average_rating !== 'undefined' && average_rating !== null) {
+                    const pct = Math.max(0, Math.min(100, Number(average_rating) / 5 * 100)); %>
+                <div class="title-rating">
+                    <span class="stars" aria-hidden="true"><i style="width:<%= pct %>%"></i></span>
+                    <span class="avg-num">(<%= average_rating %>/5)</span>
+                </div>
+                <% } %>
+            </div>
+
+            <ul class="movie-meta">
+                <li><%= movie.release_date ? new Date(movie.release_date).toLocaleDateString() : '—' %></li>
+                <% (movie.genres || []).forEach(g => { %>
+                    <li><%= g %></li>
+                <% }) %>
+            </ul>
+
+            <h3>Vista general</h3>
+            <p><%= movie.overview || '—' %></p>
+
+            <div class="crew-list">
+                <div class="crew-member">
+                    <h4>Dirigida por</h4>
+                    <ul>
+                        <% (movie.directors || []).forEach(d => { %>
+                            <li><a href="/director/<%= d.crew_member_id %>?from=movie"><%= d.crew_member_name %></a></li>
+                        <% }) %>
+                        <% if (!movie.directors || !movie.directors.length) { %><li>—</li><% } %>
+                    </ul>
+                </div>
+                <div class="crew-member">
+                    <h4>Escrita por</h4>
+                    <ul>
+                        <% (movie.writers || []).forEach(w => { %>
+                            <li><%= w.crew_member_name %></li>
+                        <% }) %>
+                        <% if (!movie.writers || !movie.writers.length) { %><li>—</li><% } %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="main-movie-content">
+
+    <section class="cast-section">
+        <h2>Reparto principal</h2>
+        <ul class="cast-list">
+            <% (movie.cast || [])
+                    .sort((a,b)=>(a.cast_order ?? 999)-(b.cast_order ?? 999))
+            .forEach(a => { %>
+                <li>
+                    <a href="/actor/<%= a.actor_id %>?from=movie"><%= a.actor_name %></a>
+                    <% if (a.character_name) { %> — <em><%= a.character_name %></em><% } %>
+                </li>
+            <% }) %>
+            <% if (!movie.cast || !movie.cast.length) { %><li>No hay información de reparto.</li><% } %>
+        </ul>
+    </section>
+
+    <aside class="user-actions-aside">
+
+        <% if (user) { %>
+            <div class="favorite-section">
+                <button
+                        id="favorite-btn"
+                        class="favorite-btn <%= movie.is_favorite ? 'favorited' : '' %>"
+                        data-userid="<%= user.id %>"
+                        data-movieid="<%= movie.movie_id %>">
+                    <span id="fav-icon">⭐</span>
+                    <span id="fav-text"><%= movie.is_favorite ? 'Quitar de favoritos' : 'Añadir a favoritos' %></span>
+                </button>
+            </div>
         <% } %>
-    </div>
 
-    <h3 class="center-text">Fecha:</h3>
-    <p class="center-text"><%= movie.release_date ? new Date(movie.release_date).toLocaleDateString() : '—' %></p>
+        <% if (user) { %>
+            <div class="review-section">
+                <h3 class="center-text">Tu reseña</h3>
+                <form class="review-form" action="/users/<%= user.id %>/movies/<%= movie.movie_id %>/review" method="post" style="text-align:center">
 
-    <h3 class="center-text">Géneros:</h3>
-    <ul class="center-text">
-        <% (movie.genres || []).forEach(g => { %>
-            <li><%= g %></li>
-        <% }) %>
-        <% if (!movie.genres || !movie.genres.length) { %><li>—</li><% } %>
-    </ul>
+                    <div class="star-rating" aria-label="Puntaje">
+                        <% for (let i = 5; i >= 1; i--) { %>
+                            <input type="radio" id="rate-<%= i %>" name="rating" value="<%= i %>" required>
+                            <label for="rate-<%= i %>" title="<%= i %> estrella<%= i>1?'s':'' %>">★</label>
+                        <% } %>
+                    </div>
 
-    <h3 class="center-text">Idioma(s):</h3>
-    <ul class="center-text">
-        <% (movie.languages || []).forEach(l => { %><li><%= l %></li><% }) %>
-        <% if (!movie.languages || !movie.languages.length) { %><li>—</li><% } %>
-    </ul>
+                    <div style="margin-top:10px;">
+                        <textarea name="opinion" rows="4" placeholder="Escribí tu opinión…" required style="width:100%;"></textarea>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button type="submit" class="btn">Publicar</button>
+                    </div>
+                    <div style="margin-top: 8px;">
+                        <a class="btn-outline" href="/users/<%= user.id %>/movies/<%= movie.movie_id %>/edit">Editar mi reseña</a>
+                    </div>
+                </form>
+            </div>
+        <% } %>
 
-    <h3 class="center-text">País(es):</h3>
-    <ul class="center-text">
-        <% (movie.countries || []).forEach(c => { %><li><%= c %></li><% }) %>
-        <% if (!movie.countries || !movie.countries.length) { %><li>—</li><% } %>
-    </ul>
+    </aside>
 
-    <h3 class="center-text">Dirigida por:</h3>
-    <ul class="center-text">
-        <% (movie.directors || []).forEach(d => { %>
-            <li><a href="/director/<%= d.crew_member_id %>?from=movie"><%= d.crew_member_name %></a></li>
-        <% }) %>
-        <% if (!movie.directors || !movie.directors.length) { %><li>—</li><% } %>
-    </ul>
-
-    <h3 class="center-text">Escrita por:</h3>
-    <ul class="center-text">
-        <% (movie.writers || []).forEach(w => { %>
-            <li><%= w.crew_member_name %></li>
-        <% }) %>
-        <% if (!movie.writers || !movie.writers.length) { %><li>—</li><% } %>
-    </ul>
-
-    <h3 class="center-text">Argumento:</h3>
-    <div id="overview" class="center-text">
-        <p><%= movie.overview || '—' %></p>
-    </div>
-
-    <h3 class="center-text">Elenco:</h3>
-    <ul class="center-text">
-        <% (movie.cast || [])
-                .sort((a,b)=>(a.cast_order ?? 999)-(b.cast_order ?? 999))
-        .forEach(a => { %>
-            <li>
-                <a href="/actor/<%= a.actor_id %>?from=movie"><%= a.actor_name %></a>
-                <% if (a.character_name) { %> — <em><%= a.character_name %></em><% } %>
-            </li>
-        <% }) %>
-        <% if (!movie.cast || !movie.cast.length) { %><li>—</li><% } %>
-    </ul>
-
-    <!-- === BOTÓN DE FAVORITOS === -->
-    <% if (user) { %>
-        <div class="center-text" style="margin-top:15px;">
-            <button 
-                id="favorite-btn"
-                class="favorite-btn <%= movie.is_favorite ? 'favorited' : '' %>"
-                data-userid="<%= user.id %>"
-                data-movieid="<%= movie.movie_id %>">
-                <span id="fav-icon">⭐</span>
-                <span id="fav-text"><%= movie.is_favorite ? 'Quitar de favoritos' : 'Añadir a favoritos' %></span>
-            </button>
-        </div>
-    <% } %>
-    <!-- === FIN BOTÓN DE FAVORITOS === -->
-
-
-    <% if (user) { %>
-        <div class="review-section">
-            <h3 class="center-text">Tu reseña</h3>
-
-            <form class="review-form" action="/users/<%= user.id %>/movies/<%= movie.movie_id %>/review" method="post" style="text-align:center">
-                <!-- Estrellas 1..5 -->
-                <div class="star-rating" aria-label="Puntaje">
-                    <% for (let i = 5; i >= 1; i--) { %>
-                        <input type="radio" id="rate-<%= i %>" name="rating" value="<%= i %>" required>
-                        <label for="rate-<%= i %>" title="<%= i %> estrella<%= i>1?'s':'' %>">★</label>
-                    <% } %>
-                </div>
-
-                <div style="margin-top:10px;">
-                    <textarea name="opinion" rows="4" placeholder="Escribí tu opinión…" required style="width:min(640px,96%);"></textarea>
-                </div>
-
-                <div style="margin-top:10px;">
-                    <button type="submit" class="btn">Publicar</button>
-                    <a class="btn-outline" href="/users/<%= user.id %>/movies/<%= movie.movie_id %>/edit">Editar mi reseña</a>
-                </div>
-            </form>
-        </div>
-    <% } %>
-
-    <div id="inicio" class="center-text"><a href="/">Inicio</a></div>
 </main>
 
-<!-- === SCRIPT PARA FAVORITOS === -->
+<div id="inicio" class="center-text"><a href="/">Inicio</a></div>
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('favorite-btn');
-  if (!btn) return;
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('favorite-btn');
+        if (!btn) return;
 
-  btn.addEventListener('click', async () => {
-    const userId = btn.dataset.userid;
-    const movieId = btn.dataset.movieid;
-
-    try {
-      const res = await fetch(`/users/${userId}/movies/${movieId}/favorite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        if (data.action === 'ADDED') {
-          btn.classList.add('favorited');
-          document.getElementById('fav-text').textContent = 'Quitar de favoritos';
-        } else {
-          btn.classList.remove('favorited');
-          document.getElementById('fav-text').textContent = 'Añadir a favoritos';
-        }
-      } else {
-        alert('Error al modificar favoritos');
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      alert('No se pudo actualizar el estado de favorito');
-    }
-  });
-});
+        btn.addEventListener('click', async () => {
+            const userId = btn.dataset.userid;
+            const movieId = btn.dataset.movieid;
+            try {
+                const res = await fetch(`/users/${userId}/movies/${movieId}/favorite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (data.action === 'ADDED') {
+                        btn.classList.add('favorited');
+                        document.getElementById('fav-text').textContent = 'Quitar de favoritos';
+                    } else {
+                        btn.classList.remove('favorited');
+                        document.getElementById('fav-text').textContent = 'Añadir a favoritos';
+                    }
+                } else {
+                    alert('Error al modificar favoritos');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('No se pudo actualizar el estado de favorito');
+            }
+        });
+    });
 </script>
-<!-- === FIN SCRIPT === -->
 
 </body>
 </html>

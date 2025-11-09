@@ -1,0 +1,227 @@
+/* --- HERO DE LA PELÍCULA (FONDO) --- */
+.movie-hero {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    background-size: cover;
+    background-position: center center;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+}
+
+/* Capa oscura para que el texto sea legible */
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right,
+    rgba(10, 20, 30, 0.95) 15%,
+    rgba(10, 20, 30, 0.7) 50%,
+    rgba(10, 20, 30, 0.3) 100%);
+}
+
+/* Contenido sobre el hero (póster + detalles) */
+.hero-content {
+    position: relative;
+    z-index: 2;
+    width: min(1200px, 90vw);
+    margin: 0 auto;
+    padding: 40px 0;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+/* --- Póster (Columna Izquierda) --- */
+.hero-poster img {
+    width: 300px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Detalles (Columna Derecha) --- */
+.hero-details {
+    flex: 1;
+}
+
+.hero-details h1 {
+    font-size: 2.8rem;
+    margin: 0 0 10px;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+/* Re-usamos tu fila de título y rating */
+.title-row {
+    justify-content: flex-start !important; /* Alinea a la izquierda */
+    margin-bottom: 20px !important;
+}
+.title-row .movie-title {
+    text-align: left;
+    color: #ffffff;
+}
+.title-row .avg-num {
+    color: #ccc;
+}
+.title-row .stars {
+    font-size: 1.4rem;
+}
+
+/* Géneros y fecha */
+.movie-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+.movie-meta li {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin: 0; /* Resetea el 'li' de styles.css */
+}
+
+/* Overview */
+.hero-details h3 {
+    font-size: 1.3rem;
+    color: #ffffff;
+    font-weight: 600;
+    margin-top: 20px;
+}
+.hero-details p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #d1d1d1;
+    max-width: 70ch;
+}
+
+/* Crew (Director, Escritor) */
+.crew-list {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+.crew-member h4 {
+    margin: 0 0 5px;
+    font-weight: 600;
+    color: #ffffff;
+}
+.crew-member ul { margin: 0; padding: 0; list-style: none; }
+.crew-member li { margin: 0; }
+.crew-member a, .crew-member li {
+    color: #ccc;
+    font-weight: 400;
+    text-decoration: none;
+}
+.crew-member a:hover { color: #fff; }
+
+/* --- CONTENIDO PRINCIPAL (Debajo del Hero) --- */
+.main-movie-content {
+    width: min(1200px, 90vw);
+    margin: 40px auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2/3 para cast, 1/3 para user */
+    gap: 40px;
+    background: var(--bg); /* Usa el fondo de tu styles.css */
+    padding: 0; /* Resetea padding */
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* --- Sección de Reparto (Adaptada) --- */
+.cast-section {
+    padding: 20px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+.cast-section h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0 0 20px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 10px;
+}
+
+/* Lista de reparto (sin fotos) */
+.cast-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    /* Muestra en 2 columnas si hay espacio */
+    column-count: 2;
+    column-gap: 20px;
+}
+.cast-list li {
+    padding: 6px 0;
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.4;
+    /* Evita que un item se parta entre columnas */
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+.cast-list a {
+    font-weight: 600;
+    color: #333;
+}
+.cast-list em {
+    color: var(--muted);
+    font-style: italic;
+}
+
+
+/* --- Columna Derecha (Acciones de Usuario) --- */
+.user-actions-aside {
+    padding: 20px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    align-self: flex-start; /* No se estira */
+}
+.user-actions-aside h3 {
+    text-align: center;
+    margin-top: 0;
+}
+
+.review-section, .favorite-section {
+    width: 100%;
+    margin-bottom: 20px;
+}
+.favorite-section { text-align: center; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .main-movie-content {
+        grid-template-columns: 1fr; /* Una sola columna */
+    }
+}
+@media (max-width: 768px) {
+    .hero-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .hero-poster img {
+        width: 250px;
+    }
+    .title-row {
+        justify-content: center !important; /* Centra el rating */
+    }
+    .hero-details h1 { font-size: 2.2rem; }
+    .hero-details p { max-width: 100%; }
+    .crew-list { justify-content: center; }
+
+    .cast-list {
+        column-count: 1; /* Una sola columna en pantallas pequeñas */
+    }
+}
