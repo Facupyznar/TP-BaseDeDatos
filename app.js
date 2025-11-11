@@ -12,7 +12,7 @@ const Activity = require('./models/user_activity');
 // === TMDb Helper para imágenes de películas ===
 const { enrichMoviesWithPosters } = require('./models/tmdb_helper');
 
-const { enrichPersonData, calculateAge, fetchPersonDetails } = require('./models/tmdb_person_helper');
+const { enrichPersonData, calculateAge } = require('./models/tmdb_person_helper');
 
 
 const app = express();
@@ -227,7 +227,7 @@ app.get('/keywords/search', async (req, res) => {
             return res.render('resultados_keyword', {
                 user: req.session.user || null,
                 keyword,
-                movies: [],
+                movies: enrichedMovies,
                 total: 0,
                 error: 'Ingresá una palabra clave.'
             });
@@ -244,11 +244,12 @@ app.get('/keywords/search', async (req, res) => {
       LIMIT 200;
     `;
         const { rows } = await db.query(sql, [keyword]);
+        const enrichedMovies = await enrichMoviesWithPosters(rows);
 
         res.render('resultados_keyword', {
             user: req.session.user || null,
             keyword,
-            movies: rows,
+            movies: enrichedMovies,
             total: rows.length,
             error: null
         });
@@ -322,58 +323,68 @@ app.get('/buscar', async (req, res) => {
             const enrichedMovies = await enrichMoviesWithPosters(m.rows);
             return res.render('resultado', { q, movies: enrichedMovies, actors: [], directors: [] });
         }
-        else if (type === 'actor') {
-            const actorsFromDB = await db.searchActors(query);
+        if (type === 'actor') {
+            const a = await actorQ;
 
-            // Mapea los resultados y trae los detalles de TMDB
-            const actorsWithDetails = await Promise.all(
-                actorsFromDB.map(async (actor) => {
-                    const tmdbDetails = await fetchPersonDetails(actor.person_id);
+            // ¡AÑADIR ESTO! (Enriquecer actores)
+            const enrichedActors = await Promise.all(
+                a.rows.map(async (actor) => {
+                    const personData = await enrichPersonData(actor.person_name);
                     return {
-                        ...actor, // person_id, person_name
-                        ...tmdbDetails // profile_path
+                        ...actor,
+                        profile_url: personData?.profile_url || null
                     };
                 })
             );
 
-            res.render('resultado.ejs', {
-                title: 'Resultados de Búsqueda',
-                query: query,
-                type: type,
-                actors: actorsWithDetails, // ¡Pasa la data completa!
-                user: req.user,
-                isAdmin: req.user ? req.user.isAdmin : false
-            });
+            return res.render('resultado', { q, movies: [], actors: enrichedActors, directors: [] });
         }
-        else if (type === 'director') {
-            const directorsFromDB = await db.searchDirectors(query);
+        if (type === 'director') {
+            const d = await directorQ;
 
-            // Mapea los resultados y trae los detalles de TMDB
-            const directorsWithDetails = await Promise.all(
-                directorsFromDB.map(async (director) => {
-                    const tmdbDetails = await fetchPersonDetails(director.person_id);
+            // ¡AÑADIR ESTO! (Enriquecer directores)
+            const enrichedDirectors = await Promise.all(
+                d.rows.map(async (director) => {
+                    const personData = await enrichPersonData(director.person_name);
                     return {
-                        ...director, // person_id, person_name
-                        ...tmdbDetails // profile_path
+                        ...director,
+                        profile_url: personData?.profile_url || null
                     };
                 })
             );
 
-            res.render('resultado.ejs', {
-                title: 'Resultados de Búsqueda',
-                query: query,
-                type: type,
-                directors: directorsWithDetails, // ¡Pasa la data completa!
-                user: req.user,
-                isAdmin: req.user ? req.user.isAdmin : false
-            });
-
+            return res.render('resultado', { q, movies: [], actors: [], directors: enrichedDirectors });
         }
 
         // Todo
         const [m, a, d] = await Promise.all([movieQ, actorQ, directorQ]);
         const enrichedMovies = await enrichMoviesWithPosters(m.rows);
-        res.render('resultado', { q, movies: enrichedMovies, actors: a.rows, directors: d.rows });
+
+        const enrichedActors = await Promise.all(
+            a.rows.map(async (actor) => {
+                const personData = await enrichPersonData(actor.person_name);
+                return {
+                    ...actor,
+                    profile_url: personData?.profile_url || null
+                };
+            })
+        );
+
+        const enrichedDirectors = await Promise.all(
+            d.rows.map(async (director) => {
+                const personData = await enrichPersonData(director.person_name);
+                return {
+                    ...director,
+                    profile_url: personData?.profile_url || null
+                };
+            })
+        );
+        res.render('resultado', {
+            q,
+            movies: enrichedMovies,
+            actors: enrichedActors,     // Cambiar de a.rows a enrichedActors
+            directors: enrichedDirectors // Cambiar de d.rows a enrichedDirectors
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error en la búsqueda.');

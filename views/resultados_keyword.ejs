@@ -5,37 +5,68 @@
     <title>Resultados por Keyword</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles/ResultadoStyle.css">
 </head>
 <body>
 
-<header class="header">
-    <a class="home-btn" href="/">
-        <img src="/imgs/casa3.png" alt="Inicio">
-    </a>
-</header>
+<%- include('components/NavBar.ejs', { user: (typeof user !== 'undefined' ? user : null), isAdmin: (typeof isAdmin !== 'undefined' ? isAdmin : false) }) %>
 
-<main class="container">
-    <h1 class="center-text">Resultados de "<%= (keyword || '') %>"</h1>
+<main class="search-results-page">
+
+    <div class="search-header">
+        <h1>Resultados para "<%= (keyword || '') %>"</h1>
+        <% if (total > 0) { %>
+            <p class="results-count">Se encontraron <strong><%= total %></strong> película(s).</p>
+        <% } %>
+    </div>
 
     <% if (error) { %>
         <div class="alert center-text"><%= error %></div>
     <% } %>
 
     <% if (total > 0) { %>
-        <p class="center-text" style="color:var(--muted)">Se encontraron <strong><%= total %></strong> película(s).</p>
-
-        <ul class="center-text">
-            <% movies.forEach(m => { %>
-                <li>
-                    <a href="/pelicula/<%= m.movie_id %>?from=keyword">
-                        <%= m.title %>
-                        <% if (m.release_date) { %> (<%= new Date(m.release_date).getFullYear() %>)<% } %>
-                    </a>
-                </li>
-            <% }) %>
-        </ul>
+        <section class="results-section">
+            <h2 class="section-title">
+                <span class="icon">🎬</span>
+                Películas (<%= total %>)
+            </h2>
+            <div class="movies-grid">
+                <% movies.forEach(movie => {
+                    // Usar poster_url de TMDb si está disponible, sino usar placeholder
+                    let posterUrl;
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else {
+                        // Fallback a Lorem Picsum con seed único
+                        const seed = movie.movie_id || movie.title;
+                        posterUrl = `https://picsum.photos/seed/${seed}/342/513`;
+                    }
+                %>
+                <a href="/pelicula/<%= movie.movie_id %>?from=keyword" class="movie-result-card">
+                    <div class="movie-result-poster">
+                        <img src="<%= posterUrl %>"
+                             alt="<%= movie.title %>"
+                             loading="lazy">
+                    </div>
+                    <div class="movie-result-info">
+                        <h3 class="movie-result-title"><%= movie.title %></h3>
+                        <% if (movie.release_date) { %>
+                            <p class="movie-result-year">
+                                <%= new Date(movie.release_date).getFullYear() %>
+                            </p>
+                        <% } %>
+                    </div>
+                </a>
+                <% }) %>
+            </div>
+        </section>
     <% } else if (!error) { %>
-        <p class="center-text">No se encontraron películas relacionadas.</p>
+        <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <h2>No se encontraron resultados</h2>
+            <p>No se encontraron películas para la keyword "<%= keyword %>"</p>
+            <a href="/" class="btn-primary">Volver al inicio</a>
+        </div>
     <% } %>
 </main>
 

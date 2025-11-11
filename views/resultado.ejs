@@ -69,7 +69,11 @@
                 <% actors.forEach(a => { %>
                     <a href="/actor/<%= a.person_id %>?from=search" class="person-card">
                         <div class="person-avatar">
-                            <span>👤</span>
+                            <% if (a.profile_url) { %>
+                                <img src="<%= a.profile_url %>" alt="<%= a.person_name %>" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
+                            <% } else { %>
+                                <span>👤</span>
+                            <% } %>
                         </div>
                         <div class="person-info">
                             <h3 class="person-name"><%= a.person_name %></h3>
@@ -93,7 +97,11 @@
                 <% directors.forEach(d => { %>
                     <a href="/director/<%= d.person_id %>?from=search" class="person-card">
                         <div class="person-avatar director">
-                            <span>🎬</span>
+                            <% if (d.profile_url) { %>
+                                <img src="<%= d.profile_url %>" alt="<%= d.person_name %>" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover;">
+                            <% } else { %>
+                                <span>🎬</span>
+                            <% } %>
                         </div>
                         <div class="person-info">
                             <h3 class="person-name"><%= d.person_name %></h3>
