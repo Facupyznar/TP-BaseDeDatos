@@ -1,5 +1,7 @@
 # TP-BaseDeDatos
 
+Integrantes del grupo: Ignacion Pacheco, Facundo Pyznar, Eliseo Alanis Toledo, Thiago Serebrinsky y Lucho Calvani
+
 Ruta del tp pdf con las instrucciones: https://campusvirtual.austral.edu.ar/pluginfile.php/3565750/mod_resource/content/4/TP%20-%20MovieWeb%202025.pdf
 
 Como clonar un repositorio de GitHub: https://docs.github.com/es/repositories/creating-and-managing-repositories/cloning-a-repository
