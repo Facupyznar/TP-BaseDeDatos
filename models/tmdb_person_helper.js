@@ -86,6 +86,24 @@ async function enrichPersonData(personName) {
     }
 }
 
+async function fetchPersonDetails(personId) {
+    const url = `${BASE_URL}/person/${personId}?language=es-ES&api_key=${API_KEY}`;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Error de TMDB: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return {
+            profile_path: data.profile_path
+            // puedes añadir más datos si quieres, ej: known_for_department: data.known_for_department
+        };
+    } catch (error) {
+        console.error('Error fetching person details from TMDB:', error);
+        return { profile_path: null }; // Devuelve null si falla
+    }
+}
+
 /**
  * Calcula la edad a partir de una fecha de nacimiento
  */
@@ -107,5 +125,6 @@ function calculateAge(birthday, deathday = null) {
 
 module.exports = {
     enrichPersonData,
-    calculateAge
+    calculateAge,
+    fetchPersonDetails
 };

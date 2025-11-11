@@ -3,58 +3,122 @@
 <head>
     <meta charset="utf-8"/>
     <title>Resultados para "<%= q %>"</title>
-    <link rel="stylesheet" href="/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/ResultadoStyle.css">
 </head>
 <body>
-<header class="header">
-    <a class="home-btn" href="/">
-        <img src="/imgs/casa3.png" alt="Inicio">
-    </a>
-</header>
 
-<h1 class="center-text">Resultados para "<%= q %>"</h1>
+<%- include('components/NavBar.ejs', { user: (typeof user !== 'undefined' ? user : null), isAdmin: (typeof isAdmin !== 'undefined' ? isAdmin : false) }) %>
 
-<!-- Películas -->
-<% if (movies.length) { %>
-    <h2 class="center-text">Películas</h2>
-    <ul>
-        <% movies.forEach(m => { %>
-            <li class="center-text">
-                <a href="/pelicula/<%= m.movie_id %>?from=search">
-                    <%= m.title %>
-                    <% if (m.release_date) { %> (<%= new Date(m.release_date).getFullYear() %>)<% } %>
+<main class="search-results-page">
+    <div class="search-header">
+        <h1>Resultados para "<%= q %>"</h1>
+        <p class="results-count">
+            <%= (movies.length + actors.length + directors.length) %> resultados encontrados
+        </p>
+    </div>
+
+    <!-- Películas -->
+    <% if (movies.length > 0) { %>
+        <section class="results-section">
+            <h2 class="section-title">
+                <span class="icon">🎬</span>
+                Películas (<%= movies.length %>)
+            </h2>
+            <div class="movies-grid">
+                <% movies.forEach(movie => {
+                    // Usar poster_url de TMDb si está disponible, sino usar placeholder
+                    let posterUrl;
+                    if (movie.poster_url) {
+                        posterUrl = movie.poster_url;
+                    } else {
+                        // Fallback a Lorem Picsum con seed único
+                        const seed = movie.movie_id || movie.title;
+                        posterUrl = `https://picsum.photos/seed/${seed}/342/513`;
+                    }
+                %>
+                <a href="/pelicula/<%= movie.movie_id %>?from=search" class="movie-result-card">
+                    <div class="movie-result-poster">
+                        <img src="<%= posterUrl %>"
+                             alt="<%= movie.title %>"
+                             loading="lazy">
+                    </div>
+                    <div class="movie-result-info">
+                        <h3 class="movie-result-title"><%= movie.title %></h3>
+                        <% if (movie.release_date) { %>
+                            <p class="movie-result-year">
+                                <%= new Date(movie.release_date).getFullYear() %>
+                            </p>
+                        <% } %>
+                    </div>
                 </a>
-            </li>
-        <% }) %>
-    </ul>
-<% } %>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
 
-<!-- Actores -->
-<% if (actors.length) { %>
-    <h2 class="center-text">Actores</h2>
-    <ul>
-        <% actors.forEach(a => { %>
-            <li class="center-text">
-                <a href="/actor/<%= a.person_id %>?from=search"><%= a.person_name %></a>
-            </li>
-        <% }) %>
-    </ul>
-<% } %>
+    <!-- Actores -->
+    <% if (actors.length > 0) { %>
+        <section class="results-section">
+            <h2 class="section-title">
+                <span class="icon">🎭</span>
+                Actores (<%= actors.length %>)
+            </h2>
+            <div class="people-list">
+                <% actors.forEach(a => { %>
+                    <a href="/actor/<%= a.person_id %>?from=search" class="person-card">
+                        <div class="person-avatar">
+                            <span>👤</span>
+                        </div>
+                        <div class="person-info">
+                            <h3 class="person-name"><%= a.person_name %></h3>
+                            <p class="person-role">Actor</p>
+                        </div>
+                        <span class="arrow">→</span>
+                    </a>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
 
-<!-- Directores -->
-<% if (directors.length) { %>
-    <h2 class="center-text">Directores</h2>
-    <ul>
-        <% directors.forEach(d => { %>
-            <li class="center-text">
-                <a href="/director/<%= d.person_id %>?from=search"><%= d.person_name %></a>
-            </li>
-        <% }) %>
-    </ul>
-<% } %>
+    <!-- Directores -->
+    <% if (directors.length > 0) { %>
+        <section class="results-section">
+            <h2 class="section-title">
+                <span class="icon">🎥</span>
+                Directores (<%= directors.length %>)
+            </h2>
+            <div class="people-list">
+                <% directors.forEach(d => { %>
+                    <a href="/director/<%= d.person_id %>?from=search" class="person-card">
+                        <div class="person-avatar director">
+                            <span>🎬</span>
+                        </div>
+                        <div class="person-info">
+                            <h3 class="person-name"><%= d.person_name %></h3>
+                            <p class="person-role">Director</p>
+                        </div>
+                        <span class="arrow">→</span>
+                    </a>
+                <% }) %>
+            </div>
+        </section>
+    <% } %>
 
-<% if (!movies.length && !actors.length && !directors.length) { %>
-    <p class="center-text">No se encontraron resultados.</p>
-<% } %>
+    <% if (!movies.length && !actors.length && !directors.length) { %>
+        <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <h2>No se encontraron resultados</h2>
+            <p>Intenta con otros términos de búsqueda</p>
+            <a href="/" class="btn-primary">Volver al inicio</a>
+        </div>
+    <% } %>
+
+    <div class="back-home">
+        <a href="/">← Volver al inicio</a>
+    </div>
+</main>
+
 </body>
 </html>

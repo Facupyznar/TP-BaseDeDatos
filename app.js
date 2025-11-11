@@ -12,7 +12,7 @@ const Activity = require('./models/user_activity');
 // === TMDb Helper para imágenes de películas ===
 const { enrichMoviesWithPosters } = require('./models/tmdb_helper');
 
-const { enrichPersonData, calculateAge } = require('./models/tmdb_person_helper');
+const { enrichPersonData, calculateAge, fetchPersonDetails } = require('./models/tmdb_person_helper');
 
 
 const app = express();
@@ -288,51 +288,92 @@ app.get('/buscar', async (req, res) => {
         // Películas por título
         const movieQ = db.query(
             `SELECT movie_id, title, release_date
-         FROM movies.movie
-        WHERE title ILIKE $1
-        ORDER BY release_date DESC NULLS LAST
-        LIMIT 100`,
+             FROM movies.movie
+             WHERE title ILIKE $1
+             ORDER BY release_date DESC NULLS LAST
+                 LIMIT 100`,
             [like]
         );
 
         // Actores por nombre (existen en movie_cast)
         const actorQ = db.query(
             `SELECT DISTINCT p.person_id, p.person_name
-         FROM movies.person p
-         JOIN movies.movie_cast mc ON mc.person_id = p.person_id
-        WHERE p.person_name ILIKE $1
-        ORDER BY p.person_name
-        LIMIT 100`,
+             FROM movies.person p
+                      JOIN movies.movie_cast mc ON mc.person_id = p.person_id
+             WHERE p.person_name ILIKE $1
+             ORDER BY p.person_name
+                 LIMIT 100`,
             [like]
         );
 
         // Directores por nombre (job = 'Director' en movie_crew)
         const directorQ = db.query(
             `SELECT DISTINCT p.person_id, p.person_name
-         FROM movies.person p
-         JOIN movies.movie_crew mcr ON mcr.person_id = p.person_id
-        WHERE mcr.job = 'Director' AND p.person_name ILIKE $1
-        ORDER BY p.person_name
-        LIMIT 100`,
+             FROM movies.person p
+                      JOIN movies.movie_crew mcr ON mcr.person_id = p.person_id
+             WHERE mcr.job = 'Director' AND p.person_name ILIKE $1
+             ORDER BY p.person_name
+                 LIMIT 100`,
             [like]
         );
 
         if (type === 'movie') {
             const m = await movieQ;
-            return res.render('resultado', { q, movies: m.rows, actors: [], directors: [] });
+            const enrichedMovies = await enrichMoviesWithPosters(m.rows);
+            return res.render('resultado', { q, movies: enrichedMovies, actors: [], directors: [] });
         }
-        if (type === 'actor') {
-            const a = await actorQ;
-            return res.render('resultado', { q, movies: [], actors: a.rows, directors: [] });
+        else if (type === 'actor') {
+            const actorsFromDB = await db.searchActors(query);
+
+            // Mapea los resultados y trae los detalles de TMDB
+            const actorsWithDetails = await Promise.all(
+                actorsFromDB.map(async (actor) => {
+                    const tmdbDetails = await fetchPersonDetails(actor.person_id);
+                    return {
+                        ...actor, // person_id, person_name
+                        ...tmdbDetails // profile_path
+                    };
+                })
+            );
+
+            res.render('resultado.ejs', {
+                title: 'Resultados de Búsqueda',
+                query: query,
+                type: type,
+                actors: actorsWithDetails, // ¡Pasa la data completa!
+                user: req.user,
+                isAdmin: req.user ? req.user.isAdmin : false
+            });
         }
-        if (type === 'director') {
-            const d = await directorQ;
-            return res.render('resultado', { q, movies: [], actors: [], directors: d.rows });
+        else if (type === 'director') {
+            const directorsFromDB = await db.searchDirectors(query);
+
+            // Mapea los resultados y trae los detalles de TMDB
+            const directorsWithDetails = await Promise.all(
+                directorsFromDB.map(async (director) => {
+                    const tmdbDetails = await fetchPersonDetails(director.person_id);
+                    return {
+                        ...director, // person_id, person_name
+                        ...tmdbDetails // profile_path
+                    };
+                })
+            );
+
+            res.render('resultado.ejs', {
+                title: 'Resultados de Búsqueda',
+                query: query,
+                type: type,
+                directors: directorsWithDetails, // ¡Pasa la data completa!
+                user: req.user,
+                isAdmin: req.user ? req.user.isAdmin : false
+            });
+
         }
 
         // Todo
         const [m, a, d] = await Promise.all([movieQ, actorQ, directorQ]);
-        res.render('resultado', { q, movies: m.rows, actors: a.rows, directors: d.rows });
+        const enrichedMovies = await enrichMoviesWithPosters(m.rows);
+        res.render('resultado', { q, movies: enrichedMovies, actors: a.rows, directors: d.rows });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error en la búsqueda.');
@@ -404,7 +445,8 @@ app.get('/actor/:id', requireAdminOrFromApp, async (req, res) => {
 app.get('/director/:id', requireAdminOrFromApp, async (req, res) => {
     const id = Number(req.params.id);
     try {
-        const { rows } = await db.query(
+        // Obtener películas que dirigió
+        const directingQuery = await db.query(
             `SELECT DISTINCT p.person_name AS director_name,
               m.movie_id, m.title, m.release_date
          FROM movies.movie m
@@ -414,8 +456,49 @@ app.get('/director/:id', requireAdminOrFromApp, async (req, res) => {
         ORDER BY m.release_date DESC NULLS LAST`,
             [id]
         );
-        const directorName = rows.length ? rows[0].director_name : '';
-        res.render('director', { directorName, movies: rows });
+
+        // Obtener películas donde actuó (por si también es actor)
+        const actingQuery = await db.query(
+            `SELECT DISTINCT p.person_name AS actor_name,
+              m.movie_id, m.title, m.release_date, mc.character_name, mc.cast_order
+         FROM movies.movie m
+         JOIN movies.movie_cast mc ON m.movie_id = mc.movie_id
+         JOIN movies.person p      ON p.person_id = mc.person_id
+        WHERE mc.person_id = $1
+        ORDER BY m.release_date DESC NULLS LAST`,
+            [id]
+        );
+
+        const directingMovies = directingQuery.rows;
+        const actingMovies = actingQuery.rows;
+
+        const directorName = directingMovies.length > 0
+            ? directingMovies[0].director_name
+            : (actingMovies.length > 0 ? actingMovies[0].actor_name : '');
+
+        if (!directorName) {
+            return res.status(404).send('Director no encontrado.');
+        }
+
+        // Enriquecer películas con posters
+        const enrichedDirectingMovies = await enrichMoviesWithPosters(directingMovies);
+        const enrichedActingMovies = await enrichMoviesWithPosters(actingMovies);
+
+        // Obtener información adicional del director desde TMDB
+        let personDetails = null;
+        if (directorName) {
+            personDetails = await enrichPersonData(directorName);
+            if (personDetails) {
+                personDetails.age = calculateAge(personDetails.birthday, personDetails.deathday);
+            }
+        }
+
+        res.render('director', {
+            directorName,
+            movies: enrichedDirectingMovies,
+            actingMovies: enrichedActingMovies,
+            personDetails
+        });
     } catch (e) {
         console.error(e);
         res.status(500).send('Error al cargar las películas del director.');
