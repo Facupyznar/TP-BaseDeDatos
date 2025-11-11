@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Usuarios</title>
     <link rel="stylesheet" href="/styles.css">
+
 </head>
 <body>
 
@@ -16,7 +17,7 @@
 
 <main class="container">
     <% if (successMessage) { %>
-        <div class="alert center-text"><%= successMessage %></div>
+        <div class="alert alert-success center-text" style="background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;"><%= successMessage %></div>
     <% } %>
 
     <h1 class="center-text">Lista de usuarios</h1>
@@ -24,20 +25,28 @@
     <% if (!users || users.length === 0) { %>
         <p class="center-text" style="color:var(--muted);">No hay usuarios para mostrar.</p>
     <% } else { %>
-        <ul>
+
+        <ul class="user-list-admin">
             <% users.forEach(u => { %>
-                <li class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                    <div>
-                        <strong>
-                            <a class="link" href="/users/<%= u.user_id %>/profile"><%= u.user_name %></a>
-                        </strong>
-                        — <%= u.user_username %> — <%= u.user_email %>
-                        <% if (u.is_admin === true) { %>
-                            <span class="badge" style="margin-left:8px;">Admin</span>
-                        <% } %>
+                <li class="card user-list-item">
+
+                    <div class="avatar-small">
+                        <%= u.user_name.charAt(0).toUpperCase() %>
                     </div>
 
-                    <form action="/users/<%= u.user_id %>/delete" method="POST" style="margin:0;"
+                    <div class="user-info">
+                        <strong>
+                            <a class="link" href="/profile/<%= u.user_id %>"><%= u.user_name %></a>
+                        </strong>
+                        <span class="username">@<%= u.user_username %></span>
+                        <span class="email"><%= u.user_email %></span>
+                    </div>
+
+                    <% if (u.is_admin === true) { %>
+                        <span class="badge" style="margin-left:auto;">Admin</span>
+                    <% } %>
+
+                    <form action="/users/<%= u.user_id %>/delete" method="POST" style="margin:0 0 0 16px;"
                           onsubmit="return confirm('¿Seguro que querés borrar este usuario? Esta acción no se puede deshacer.');">
                         <button type="submit" class="btn-danger">Eliminar</button>
                     </form>
@@ -45,9 +54,6 @@
             <% }) %>
         </ul>
     <% } %>
-
-
 </main>
-
 </body>
 </html>

@@ -808,14 +808,18 @@ app.get('/profile/:userId', async (req, res) => {
         let activities = [];
         const isAdminFlag = isAdmin(req);
 
-        if (isAdminFlag) {
-        activities = await Activity.find({ userId })
-            .sort({ timestamp: -1 })
-            .limit(30)
-            .lean();
+        // Verificar si el usuario logueado está viendo su propio perfil
+        const isOwnProfile = req.session.user && req.session.user.id === userId;
+        // Solo cargar actividades si es admin o es su propio perfil
+
+        if (isAdminFlag || isOwnProfile) {
+            activities = await Activity.find({ userId })
+                .sort({ timestamp: -1 })
+                .limit(30)
+                .lean();
         }
 
-        // Agregar consulta de favoritos (CAMBIADO: pool → db)
+        // Agregar consulta de favoritos
         const favoritesResult = await db.query(`
           SELECT m.movie_id, m.title, m.release_date
           FROM movies.user_favorites uf
@@ -825,10 +829,13 @@ app.get('/profile/:userId', async (req, res) => {
           LIMIT 10
         `, [userId]);
 
+        const enrichedReviews = await enrichMoviesWithPosters(reviews);
+        const enrichedFavorites = await enrichMoviesWithPosters(favoritesResult.rows);
+
         res.render('user_profile', {
           user,
-          reviews,
-          favorites: favoritesResult.rows,
+          reviews: enrichedReviews,
+          favorites: enrichedFavorites,
           activities,
           isAdmin: isAdminFlag
         });
@@ -862,7 +869,6 @@ app.post('/users/:userId/delete', requireAdmin, async (req, res) => {
     if (!Number.isFinite(userId)) return res.status(400).send('ID inválido');
 
     try {
-        // Si tu FK no tiene ON DELETE CASCADE, primero borra relaciones
         await db.query(`DELETE FROM movies.movie_user WHERE user_id = $1`, [userId]);
 
         // Ahora el usuario

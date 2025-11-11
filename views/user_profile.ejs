@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="utf-8"/>
-    <title>Perfil de Usuario</title>
+    <title>Perfil de <%= user.user_name %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/styles/CarouselStyle.css">
 </head>
 <body>
 
@@ -14,100 +15,155 @@
     </a>
 </header>
 
-<main class="container">
-    <h1 class="center-text">Perfil de <%= user.user_name %></h1>
+<div class="profile-container container">
 
-    <div class="center-text" style="color:var(--muted); margin-bottom:16px;">
-        <div><strong>Usuario:</strong> <%= user.user_username %></div>
-        <div><strong>Email:</strong> <%= user.user_email %></div>
-    </div>
-
-    <!-- Reseñas/ratings/opiniones desde PG (movies.movie_user JOIN movies.movie) -->
-    <h2 class="center-text">Mis calificaciones y opiniones</h2>
-    <% if ((reviews || []).length > 0) { %>
-        <ul class="review-list">
-            <% reviews.forEach(r => {
-                const pct = r.rating ? Math.max(0, Math.min(100, Number(r.rating) / 5 * 100)) : 0;
-            %>
-            <li class="review-item card">
-                <div class="review-title">
-                    🎬 <a href="/pelicula/<%= r.movie_id %>?from=person"><%= r.title %></a>
-                </div>
-
-                <% if (r.rating) { %>
-                    <div class="review-rating" style="display:flex; align-items:center; justify-content:flex-start; gap:.4rem; margin:4px 0;">
-                        <span class="stars" aria-hidden="true"><i style="width:<%= pct %>%"></i></span>
-                        <span>(<%= r.rating %>/5)</span>
-                    </div>
-                <% } %>
-
-                <% if (r.opinion) { %>
-                    <div class="review-text"><%= r.opinion %></div>
-                <% } %>
-
-                <div style="margin-top:8px;">
-                    <a class="btn-outline" href="/users/<%= user.user_id %>/movies/<%= r.movie_id %>/edit">Editar</a>
-                </div>
-            </li>
-            <% }) %>
-        </ul>
-    <% } else { %>
-        <p class="center-text">Todavía no calificaste ninguna película.</p>
-    <% } %>
-
-    <h2 class="center-text">Películas favoritas</h2>
-    <% if ((favorites || []).length > 0) { %>
-        <ul class="review-list">
-            <% favorites.forEach(f => { %>
-            <li class="review-item card">
-                <div class="review-title">
-                    ⭐ <a href="/pelicula/<%= f.movie_id %>?from=profile"><%= f.title %></a>
-                </div>
-            </li>
-            <% }) %>
-        </ul>
-    <% } else { %>
-        <p class="center-text">No tenés películas favoritas todavía.</p>
-    <% } %>
-
-    <!-- Timeline visible solo para administradores -->
-    <% if (isAdmin) { %>
-    <section class="timeline">
-        <h2>Actividad reciente del usuario</h2>
-
-        <% if ((activities || []).length === 0) { %>
-            <p>Sin actividad registrada todavía.</p>
-        <% } else { %>
-            <ul class="activity-list">
-                <% activities.forEach(a => { %>
-                    <li class="activity-item">
-                        <% if (a.type === 'RATED_MOVIE') { %>
-                            🎬 Calificó la película 
-                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a> 
-                            con <%= a.details.rating %> ⭐
-                        <% } else if (a.type === 'WROTE_REVIEW') { %>
-                            ✍️ Escribió una reseña sobre 
-                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a>
-                        <% } else if (a.type === 'ADDED_TO_FAVORITES') { %>
-                            ⭐ Añadió 
-                            <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a> 
-                            a sus favoritos
-                        <% } %>
-                        <br>
-                        <small class="timestamp"><%= new Date(a.timestamp).toLocaleString() %></small>
-                    </li>
-                <% }) %>
-            </ul>
-        <% } %>
-    </section>
-    <% } %>
-
-    <% if (isAdmin){ %>
-        <div class="center-text" style="margin-top:18px;">
-            <a class="btn" href="/users">← Volver a la lista de usuarios</a>
+    <aside class="profile-sidebar card">
+        <div class="avatar">
+            <%= user.user_name.charAt(0).toUpperCase() %>
         </div>
-    <% } %>
-</main>
+        <h2><%= user.user_name %></h2>
+        <p class="username">@<%= user.user_username %></p>
 
+        <div class="stats-container">
+            <div class="stat-item">
+                <strong><%= reviews.length %></strong>
+                <span>Calificaciones</span>
+            </div>
+            <div class="stat-item">
+                <strong><%= favorites.length %></strong>
+                <span>Favoritas</span>
+            </div>
+        </div>
+
+        <% if (isAdmin){ %>
+            <a class="btn btn-outline" href="/users" style="width: 100%; margin-top: 20px;">
+                ← Lista de Usuarios
+            </a>
+        <% } %>
+    </aside>
+
+    <main class="profile-main">
+
+        <nav class="tabs">
+            <button class="tab-link active" data-tab="tab-reviews">Calificaciones y Opiniones</button>
+            <button class="tab-link" data-tab="tab-favorites">Favoritas</button>
+            <button class="tab-link" data-tab="tab-timeline">Actividad Reciente</button>
+        </nav>
+
+        <div id="tab-reviews" class="tab-content active">
+            <% if ((reviews || []).length > 0) { %>
+                <ul class="review-list">
+                    <% reviews.forEach(r => {
+                        const pct = r.rating ? Math.max(0, Math.min(100, Number(r.rating) / 5 * 100)) : 0;
+                    %>
+                    <li class="review-item card" style="display: flex; gap: 18px; align-items: flex-start;">
+                        <div class="review-poster">
+                            <a href="/pelicula/<%= r.movie_id %>?from=person">
+                                <img src="<%= r.poster_url %>" alt="Poster de <%= r.title %>" style="width: 100px; border-radius: 8px; min-width: 100px;">
+                            </a>
+                        </div>
+                        <div class="review-content" style="flex: 1;">
+                            <div class="review-title">
+                                <a href="/pelicula/<%= r.movie_id %>?from=person"><strong><%= r.title %></strong></a>
+                            </div>
+                            <% if (r.rating) { %>
+                                <div class="stars" style="font-size: 1.1rem; margin-top: 4px;"><i style="width:<%= pct %>%;"></i></div>
+                            <% } %>
+                            <% if (r.opinion) { %>
+                                <p class="review-opinion">"<%= r.opinion %>"</p>
+                            <% } %>
+                            <small class="timestamp" style="margin-top: 8px; display: inline-block;"><%= new Date(r.created_at).toLocaleDateString() %></small>
+                        </div>
+                    </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <p class="center-text" style="padding-top: 20px;">Aún no has calificado ninguna película.</p>
+            <% } %>
+        </div>
+
+        <div id="tab-favorites" class="tab-content">
+            <% if ((favorites || []).length > 0) { %>
+
+                <ul class="review-list">
+                    <% favorites.forEach(f => { %>
+
+                        <li class="review-item card" style="display: flex; gap: 18px; align-items: flex-start;">
+
+                            <div class="review-poster">
+                                <a href="/pelicula/<%= f.movie_id %>?from=person">
+                                    <img src="<%= f.poster_url %>" alt="Poster de <%= f.title %>" style="width: 100px; border-radius: 8px; min-width: 100px;">
+                                </a>
+                            </div>
+
+                            <div class="review-content" style="flex: 1;">
+                                <div class="review-title">
+                                    <a href="/pelicula/<%= f.movie_id %>?from=person"><strong><%= f.title %></strong></a>
+                                </div>
+                                <% if (f.release_date) { %>
+                                    <span class="movie-card-year" style="color: var(--muted); font-size: 15px; margin-top: 4px; display: block;">
+                                <%= new Date(f.release_date).getFullYear() %>
+                            </span>
+                                <% } %>
+                            </div>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <p class="center-text" style="padding-top: 20px;">Aún no hay películas favoritas.</p>
+            <% } %>
+        </div>
+
+        <div id="tab-timeline" class="tab-content">
+            <% if ((activities || []).length === 0) { %>
+                <p style="padding-top: 20px;">Sin actividad registrada todavía.</p>
+            <% } else { %>
+                <ul class="activity-list" style="padding-top: 10px;">
+                    <% activities.forEach(a => { %>
+                        <li class="activity-item">
+                            <% if (a.type === 'RATED_MOVIE') { %>
+                                🎬 Calificó la película
+                                <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a>
+                                con <%= a.details.rating %> ⭐
+                            <% } else if (a.type === 'WROTE_REVIEW') { %>
+                                ✍️ Escribió una reseña sobre
+                                <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a>
+                            <% } else if (a.type === 'ADDED_TO_FAVORITES') { %>
+                                ⭐ Añadió
+                                <a href="/pelicula/<%= a.details.movieId %>?from=profile"><strong><%= a.details.movieTitle %></strong></a>
+                                a sus favoritos
+                            <% } %>
+                            <br>
+                            <small class="timestamp"><%= new Date(a.timestamp).toLocaleString() %></small>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } %>
+        </div>
+
+    </main>
+</div>
+<script>
+    // --- Script para las pestañas ---
+    const tabs = document.querySelectorAll('.tab-link');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.getAttribute('data-tab');
+            const targetContent = document.getElementById(targetId);
+
+            // 1. Quitar 'active' de todos los botones y contenidos
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            // 2. Añadir 'active' solo al botón clickeado y su contenido
+            tab.classList.add('active');
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+</script>
 </body>
 </html>
