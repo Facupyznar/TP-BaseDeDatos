@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="utf-8"/>
-    <title>Perfil de <%= user.user_name %></title>
+    <title>Perfil de <%= profileData.user_name %></title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/styles/CarouselStyle.css">
@@ -15,10 +15,10 @@
 
     <aside class="profile-sidebar card">
         <div class="avatar">
-            <%= user.user_name.charAt(0).toUpperCase() %>
+            <%= profileData.user_name.charAt(0).toUpperCase() %>
         </div>
-        <h2><%= user.user_name %></h2>
-        <p class="username">@<%= user.user_username %></p>
+        <h2><%= profileData.user_name %></h2>
+        <p class="username">@<%= profileData.user_username %></p>
 
         <div class="stats-container">
             <div class="stat-item">

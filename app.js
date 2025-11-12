@@ -799,8 +799,8 @@ app.get('/profile/:userId', async (req, res) => {
     if (!Number.isFinite(userId)) return res.status(400).send('ID inválido');
 
     try {
-        const user = await getPgUser(db, userId);
-        if (!user) return res.status(404).send('Usuario no encontrado');
+        const profileData = await getPgUser(db, userId);
+        if (!profileData) return res.status(404).send('Usuario no encontrado');
 
         const reviews = await getPgUserReviews(db, userId);
 
@@ -819,7 +819,6 @@ app.get('/profile/:userId', async (req, res) => {
                 .lean();
         }
 
-        // Agregar consulta de favoritos
         const favoritesResult = await db.query(`
           SELECT m.movie_id, m.title, m.release_date
           FROM movies.user_favorites uf
@@ -833,7 +832,7 @@ app.get('/profile/:userId', async (req, res) => {
         const enrichedFavorites = await enrichMoviesWithPosters(favoritesResult.rows);
 
         res.render('user_profile', {
-          user,
+          profileData,
           reviews: enrichedReviews,
           favorites: enrichedFavorites,
           activities,
@@ -913,14 +912,12 @@ app.post('/users/:userId/movies/:movieId/favorite', requireAuth, async (req, res
 
     let action;
     if (check.rows.length > 0) {
-      // Ya está en favoritos → quitar
       await db.query(
         'DELETE FROM movies.user_favorites WHERE user_id = $1 AND movie_id = $2',
         [userId, movieId]
       );
       action = 'REMOVED';
     } else {
-      // No está en favoritos → agregar
       await db.query(
         'INSERT INTO movies.user_favorites (user_id, movie_id, added_at) VALUES ($1, $2, NOW())',
         [userId, movieId]

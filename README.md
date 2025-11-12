@@ -1,6 +1,8 @@
 # TP-BaseDeDatos
 
-Integrantes del grupo: Ignacion Pacheco, Facundo Pyznar, Eliseo Alanis Toledo, Thiago Serebrinsky y Lucho Calvani
+Grupo 1 - TP Base de Datos
+
+Integrantes del grupo: Ignacion Pacheco, Facundo Pyznar, Eliseo Alanis Toledo, Thiago Serebrinsky y Luciano Calvani
 
 Ruta del tp pdf con las instrucciones: https://campusvirtual.austral.edu.ar/pluginfile.php/3565750/mod_resource/content/4/TP%20-%20MovieWeb%202025.pdf
 
