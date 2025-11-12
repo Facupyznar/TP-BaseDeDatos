@@ -9,11 +9,8 @@
 </head>
 <body>
 
-<header class="header">
-    <a class="home-btn" href="/">
-        <img src="/imgs/casa3.png" alt="Inicio">
-    </a>
-</header>
+<%- include('components/NavBar.ejs', { user: (typeof user !== 'undefined' ? user : null), isAdmin: (typeof isAdmin !== 'undefined' ? isAdmin : false) }) %>
+
 
 <main class="container">
     <% if (successMessage) { %>
